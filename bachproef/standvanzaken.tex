@@ -20,7 +20,7 @@ Hoewel slaperigheid en vermoeidheid logisch niet synchroon verlopen, worden ze v
 \section{Oorzaken van vermoeidheid}
 Er zijn vijf algemene factoren, namelijk: de tijd besteed aan een taak of werk, slaaptekort, bioritme, monotonie van een taak en individuele kenmerken, die vermoeidheid veroorzaken \autocite{Brown}.
 \subsection{De tijd besteed aan een taak of werk}
-Een van de mogelijke oorzaken is de tijd die iemand besteed aan een bepaalde taak of werk. De meeste mensen voelen de eerste symptomen van fysieke vermoeidheid na ongeveer 2 à 3 uren aaneengesloten autorijden.
+Een van de mogelijke oorzaken is de tijd die iemand besteed aan een bepaalde taak of werk. De meeste mensen voelen de eerste symptomen van fysieke vermoeidheid na ongeveer 2 à 3 uren aaneengesloten autorijden \autocite{RiguelleGoldenbeld}.
 \subsection{Slaaptekort}
 Een slaaptekort kan chronisch of acuut zijn \autocite{VanSchagen2003}. Een chronisch slaaptekort kan het veroorzaakt worden door gevolg van te weinig slaap over een lange periode. Men heeft gemiddeld nood aan 8 uur slaap. Echter is het ook van belang dat er goed geslapen wordt. Er kunnen regelmatige verstoringen optreden tijdens het slapen, wat ook leidt tot een chronisch slaaptekort. Een acuut slaaptekort komt ook door het te weinig slapen, maar is minder structureel. Na één slechte of korte nacht, wordt er al gesproken van een partieel acuut slaaptekort. Een volledig acuut slaaptekort komt pas voor indien er in de gehele 24-uursperiode niet geslapen is.
 \subsection{Bioritme}
@@ -46,3 +46,21 @@ In België heeft een analyse van 125 letselongevallen met bussen of vrachtwagens
 Hoewel deze cijfers niet exact zijn, kan er wel geconcludeerd dat vermoeidheid toch wel een problematiek is binnenin de verkeersveiligheid. Zowel het ongevalsrisico en de ernst van het ongeval stijgen, zeker wanneer vermoeid rijden gecombineerd wordt met andere risicofactoren zoals alcohol, medicijnen en medische aandoeningen.
 
 \section{Vermoeidheid detecteren}
+Om een vermoeidheidsindicator te creëren, is er nood aan het effectief detecteren van vermoeidheid. Hiervoor is er al een algoritme die uit vijf fases bestaat. Deze zijn:
+\begin{itemize}
+    \item \textbf{Beeld voorbewerking}
+    \item \textbf{Gezichtsdetectie}
+    \item \textbf{Detecteren van het oog}
+    \item \textbf{Knipperdetectie}
+    \item \textbf{Oordelen van de vermoeidheid}
+\end{itemize}
+\autocite{Jibo2013}
+
+\subsection{Beeld voorbewerking}
+In de eerste fase wordt het beeld, dat de smartphone vastlegt, omgezet naar een kleinere resolutie. Vervolgens wordt het beeld getransformeerd naar het grijs. Doordat het beeld zijn resolutie gereduceerd wordt en het daarna naar het grijs wordt omgezet, wordt de data dat verwerkt moet worden gereduceerd. Dit zorgt voor een snellere werking van het detecteren.
+\subsection{Haar-achtige kenmerkdetectie}
+Om het gezicht en de ogen te kunnen waarnemen, wordt er gebruik gemaakt van Haar-achtige kenmerkdetectie. Het meest gebruikte is AdaBoost vanwege zijn snelheid en nauwkeurigheid \autocite{Viola2004}.
+
+Deze kenmerkdetectie houdt rekening met aangrenzende rechthoeken binnen een specifiek gebied in een bewegend detectievenster. Een afbeeldingsgebied kan omschreven worden als een combinatie van verschillende Haar-achtige kenmerken. Het aantal en types kunnen dan weer aangezien worden als verschillende objecten. De cumulatieve som van intensiteit vanaf de oorsprong wordt gedefinieerd als \begin{equation*}S_{i,j} = \sum_{x=0}^{i} \sum_{y=0}^{j} I(i, j)\end{equation*} Hierbij staat \( I_\text{(i,j)} \) voor de intensiteit op locatie (i,j), en \( S_\text{(i,j)} \) voor de cumulatieve som van intensiteiten vanaf de oorsprong op locatie (i,j). De som van intensiteit van de rechthoek, gedefinieerd als twee punten \( (x_{\text{links}}, y_{\text{boven}}) \) en  \( (x_{\text{rechts}}, y_{\text{onder}}) \), kan berekend worden volgens deze formule, die de berekening versnelt \begin{equation*}
+    S_{\text{acc}}(x_{\text{rechts}}, y_{\text{onder}}) - S_{\text{acc}}(x_{\text{links}}, y_{\text{onder}}) - S_{\text{acc}}(x_{\text{rechts}}, y_{\text{boven}}) + S_{\text{acc}}(x_{\text{links}}, y_{\text{boven}})
+\end{equation*}
