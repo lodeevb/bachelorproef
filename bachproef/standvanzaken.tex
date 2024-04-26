@@ -87,3 +87,37 @@ Om het oog te kunnen detecteren zijn er verschillende algoritmes, deze zijn onde
 Een knipper wordt gedetecteerd doordat er een verandering is van zwarte pixels in het oog. Een open oog heeft een grotere pupil, dus meer zwarte pixels, dan een gesloten oog. Het oog wordt eerst omgezet naar een binair zwart-wit afbeelding. Vervolgens wordt de ratio van het aantal zwarte pixels berekend. Tenslotte dient deze ratio als een criterium om een knipper te detecteren.
 \subsection{Oordelen van vermoeidheid}
 Er zijn drie criteria die dienen om de vermoeidheid te oordelen. Deze zijn de frequentie van de knik- en rotatiebewegingen en PERCLOS (Percent Eye Closed). Een vermoeide bestuurder kan last hebben van frequente knikbewegingen en vaak knipperen. PERCLOS is een belangrijk en veelgebruikte indicator om vermoeidheid te detecteren. Het wordt gedefinieerd als het percentage tijd waarin dat de ogen gesloten zijn in een korte tijd (dit is vaak 30 seconden). Een oog wordt als gesloten beschouwd indien de zichtbare pupil kleiner is dan 30\% van zijn maximale opening. PERCLOS wordt als volgt berekend: \begin{equation*}PERCLOS = \frac{N}{30\times S}\end{equation*} waarin N staat voor het aantal knipperingen in de recentste 30 seconden, S is de bemonsteringsfrequentie.
+
+
+\section{Artificiële Intelligentie}
+Artificiële, beter gekend als kunstmatige, intelligentie is een manier voor machines om het `gedachteproces' van een mens na te bootsen. Hiermee zijn verschillende computerprogramma's in staat om te redeneren, conclusies te vormen en te antwoorden zoals bijna ieder hedendaags persoon kan. De meest bekende kunstmatige intelligentie, die bij zowaar niemand meer onbekend blijft, is ChatGPT. Dat in staat is om vragen te beantwoorden, meer uitleg geven over verschillende programmeertalen, wiskundige formules uit te leggen en op te lossen etc. Er is een continue ontwikkeling op dit vakgebied en wordt alsmaar meer geïmplementeerd in het dagelijks leven.
+
+\subsection{Gezichtsdetectie}
+AI heeft verschillende functionaliteiten. Zo is het in staat om het gezicht te detecteren van zowel foto's, video's en in real-time. Het kan echter wel zijn dat de nauwkeurigheid en de detectieratio aangetast worden. Dit wordt gedefinieerd als 'uitdagingen', enkele van deze zijn:
+\begin{itemize}
+    \item \textbf{Belichting}: Dit kan niet uniform zijn. Dat wil zeggen dat er enkele delen van het desbetreffende detectieframe meer of minder belicht zijn dan het andere deel.
+    \item \textbf{Oriëntatie}: De richting hoe het gezicht gepositioneerd is.
+    \item \textbf{Afstand}: De afstand van het gezicht ten opzichte van de camera.
+    \item \textbf{Resolutie}: De resolutie van het beeld waarin het detecteren moet gebeuren.
+    \item \textbf{Blokkeringen}: Één of meerdere objecten die tussenin de camera en het gezicht staan.
+    \item \textbf{Complexe achtergronden}: Er zijn te veel objecten aanwezig in de achtergrond van het detectieframe.
+\end{itemize}
+Deze punten zorgen er elk voor dat er een extra uitdaging komt bij het detecteren van het gezicht, waardoor de nauwkeurigheid en het detectieratio verminderen \autocite{Kumar2019}. Binnenin het gebied van gezichtsdetectie, kunnen er verschillende detectietechnieken zijn. Deze technieken hebben elk een andere aanpak over hoe dat het gezicht wordt gedetecteerd.
+
+\subsubsection{Active Shape Model}
+Het doel van Active Shape Model (ASM) is om automatisch oriëntatiepunten te lokaliseren. Deze punten dienen om een vorm te definiëren. In het geval van het gezicht, focust het zich op de neus, ogen, mond, lippen en wenkbrauwen. ASM wordt getraind doordat er een statisch gezichtsmodel wordt gebouwd, met afbeeldingen waarop handmatig de oriëntatiepunten staan. ASM kan worden onderverdeeld in 3 groepen. Deze zijn Snakes, Point Distribution Model (PDM) en deformable templates.
+
+\paragraph{Snakes}
+Het eerste type maakt gebruikt van een generieke actieve omtrek, genaamd 'Snakes' \autocite{Kass1988}.
+Snakes worden gebruikt om de grenzen van het hoofd te identificeren. Om deze taak uit te voeren, wordt er eerst een 'snake' geïnitialiseerd in de buurt van een hoofdgrens. Vervolgens gaat het opzoek naar nabijgelegen randen en neemt het stilaan de vorm van het hoofd aan. De evolutie hiervan wordt bereikt door het minimaliseren van een energiefunctie. Het wordt als volgt genoteerd:
+\begin{equation*}
+    E_{\text{snake}} = E_{\text{internal}} +  E_{\text{external}}
+\end{equation*}
+waarbij \(E_{\text{internal}} \) en \(E_{\text{external}} \) de interne en externe energiefuncties zijn.
+De twee algemene overwegingen voor een snake te vormen zijn de selectie van energietermen en energie minimalisatie.
+Elastische energie wordt hier gebruikt als interne energie \autocite{HJELMAS}. Dit varieert met de afstand tussen de controle punten van de snake. Hierdoor wordt er een omtrek verkregen dat in staat is om te vergroten of te verkleinen. Externe energie hangt dan echter weer af van de kenmerken van het beeld. Snakes hebben echter enkele nadelen. De omtrek komt vaak vast te zitten op valse beeldkenmerken en de snakes zijn niet geschikt voor het uittrekken van niet-convexe kenmerken.
+
+\paragraph{Point Distribution Model}
+Het Point Distribution Model (PDM) is onafhankelijk ontwikkeld van geautomatiseerde beeldanalyse en heeft statische modellen van vorm \autocite{HJELMAS}. Het idee achter PDM is dat men vormen kan voorstellen als vectoren. Nadien kunnen er standaard statische methodes op toegepast worden. De modellen leren toegestane situaties van vormpunten uit trainingsvoorbeelden en gebruiken vervolgens de hoofdcomponenten om het model op te bouwen. \textcite{Yuille1992} heeft het eerste parametrische statische vormmodel van beeldanalyse, dat gebaseerd is op de hoofdcomponenten van de oriëntatiepunten hun afstanden, gepresenteerd. Het PDM kan aanschouwd worden als het basismodel van Active Shape Model.
+
+\paragraph{Deformable Templates}
