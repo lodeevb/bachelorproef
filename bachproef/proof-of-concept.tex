@@ -1,2 +1,17 @@
 \chapter{\IfLanguageName{dutch}{Proof-of-Concept}{Proof-of-Concept}}%
 \label{ch:proof-of-concept}
+\section{Introductie}
+Als PoC heb ik besloten om een mobiele applicatie te ontwikkelen. Deze applicatie is in staat om het gezicht te detecteren en er bepaalde kenmerken uit te halen om vervolgens de vermoeidheid te berekenen. De reden waarom ik er voor koos om een mobiele applicatie te maken is vrij simpel. Tegenwoordig gebruikt iedereen wel een houdertje om zijn/haar gsm in te stoppen tijdens het rijden. Vaak is dit ook op de bestuurder gericht. Doordat dan onrechtstreeks de camera vaak op de bestuurder gericht staat, kan de applicatie vervolgens het gezicht detecteren en zo de conclusie er uit halen of hij al dan niet vermoeid is.
+
+\section{Doelstellingen}
+Het belangrijkste doel van deze applicatie is, om door vermoeidheid te detecteren, het voorkomen van het gevaar in de verkeersveiligheid. Er gebeuren dagelijks wel wat ongevallen, zowel overdag als 's nachts. Één van de oorzaken voor ongevallen is dat de reactietijd van de bestuurder vaak te traag is door vermoeidheid. Uiteraard spelen er nog andere factoren een grote rol, maar de grootste oorzaak van nachtelijke ongevallen is toch wel vaak de vermoeidheid. Deze PoC zal er proberen voor zorgen dat dit zo snel mogelijk gedetecteerd kan worden en de bestuurder kan 'wakker' maken, zodat hij/zij zelf kan inschatten of ze beter zouden slapen dan verder rijden.
+
+\section{Technologieën}
+\subsection{Kotlin}
+Ik heb besloten om de applicatie te ontwikkelen in Kotlin. Sinds de Google I/O conferentie is er aangekondigd dat Android development Kotlin-first is. Dit houdt in dat dit gezien wordt als de primaire programmeertaal om een Android applicatie te ontwikkelen. Het biedt namelijk veel voordelen. Enkele van deze voordelen zijn:
+\begin{itemize}
+    \item \textbf{Minder code met een grotere leesbaarheid}: Je hoeft minder tijd te besteden aan het schrijven van code en is vaak sneller te begrijpen.
+    \item \textbf{Minder veelvoorkomende fouten}: Applicaties die gebouwd zijn met Kotlin hebben, volgens de interne gegevens van Google, 20\% minder kans om vast te lopen.
+    \item \textbf{Kotlin wordt ondersteunt in Jetpack libraries}: De aanbevolen moderne toolkit om een native UI in Kotlin te bouwen is Jetpack Compose. KTX-extenties voegen ook taalfunctionaliteiten van Kotlin toe. Deze zijn coroutines, extension functions, lambdas en genoemde parameters aan andere Android libraries.
+    \item \textbf{Ondersteuning voor multiplatform development}: Kotlin Multiplatform zorgt ervoor dat de development niet enkel voor Android gebruikers is, maar ook voor iOS, backend en webapplicaties.
+\end{itemize}

@@ -121,3 +121,53 @@ Elastische energie wordt hier gebruikt als interne energie \autocite{HJELMAS}. D
 Het Point Distribution Model (PDM) is onafhankelijk ontwikkeld van geautomatiseerde beeldanalyse en heeft statische modellen van vorm \autocite{HJELMAS}. Het idee achter PDM is dat men vormen kan voorstellen als vectoren. Nadien kunnen er standaard statische methodes op toegepast worden. De modellen leren toegestane situaties van vormpunten uit trainingsvoorbeelden en gebruiken vervolgens de hoofdcomponenten om het model op te bouwen. \textcite{Yuille1992} heeft het eerste parametrische statische vormmodel van beeldanalyse, dat gebaseerd is op de hoofdcomponenten van de oriëntatiepunten hun afstanden, gepresenteerd. Het PDM kan aanschouwd worden als het basismodel van Active Shape Model.
 
 \paragraph{Deformable Templates}
+Deformable templates nemen de prioriteit van de gezichtskenmerken in belang om zo vervolgens de prestatie van snakes te verbeteren \autocite{Yuille1992}. Het lokaliseren van grenzen van de gezichtskenmerken is geen eenvoudige taak omdat het lokale bewijs van gezichtsranden moeilijker is om in te zitten in een geheel met generieke omtrekken. De helderheid maakt het ook lastig om het randdetectieproces succesvol te laten verlopen. Snakes gaat een stap verder door de globale informatie van het oog op te nemen om zo de betrouwbaarheid van het uittrekproces te verbeteren. Dit probleem werd opgelost door een benadering met een vervormbaar sjabloon te ontwerpen. Die vervorming is gebaseerd op de rand, de helderheid en de piek. Naast de omtrek van het gezicht, zijn de opvallende kenmerken (ogen, neus, mond en wenkbrauwen) een grote uitdaging voor de gezichtsherkenning.
+
+\subsection{Low Level Analysis}
+\subsubsection{Skin Color Base}
+Het kleur is een belangrijk kenmerk van het gezicht. Het gebruiken van de huidskleur kan enkele voordelen opleveren. Kleurverwerking is namelijk veel sneller te detecteren dan de andere kenmerken van het gezicht. Door de verschillende verlichtingsomstandigheden, is de huidskleur oriëntatie-onafhankelijk. Dit maakt de bewegingsschatting veel eenvoudiger omdat er enkel een translatiemodel nodig is \autocite{Singh2003}. Echter geeft het ook enkele problemen, waarvan het grootste probleem de beïnvloedingen zijn op de camera. Zo kan het beeld beïnvloedt worden door objectbewegingen en omgevingslicht. \textcite{crowley1996} hebben de eenvoudigste manier voorgesteld om zo de huidskleur te detecteren.
+
+\paragraph{RGB Color Model}
+RGB wordt gedefinieerd als drie primaire kleuren, namelijk rood (\textbf{R}ed), groen (\textbf{G}reen) en blauw (\textbf{B}lue) \ref{fig:rgb}. 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{rgb.png}
+    \caption{Representatie RGB kleurmodel}
+    \label{fig:rgb}
+\end{figure}
+
+In het RGB-kleurmodel wordt een genormaliseerd kleurhistogram gebruikt om zo de pixels van de huidskleur in een afbeelding te detecteren \autocite{Kumar2019}. Vervolgens kan er verder genormaliseerd worden voor eventuele veranderingen in intensiteit door te delen door de luminantie. Hierdoor wordt het gezicht gelokaliseerd en gedetecteerd \autocite{Subban2012}. Het RGB model is het basis model waar andere kleurmodellen zijn uit ontstaan. Het grootste kenmerk van dit model is dat het sensitief is voor licht. In vergelijking met de andere modellen, zoals YCbCr of HSI, heeft dit echter een groot nadeel. Het is namelijk niet in staat om de zuivere kleur (chroma) en de intensiteit van een pixel duidelijk te scheiden, waardoor sommige huidkleurige gebieden moeilijk te onderscheiden zijn. Ongeacht dat het RGB model gebruikt wordt om afbeeldingen op te slaan, wordt het amper gebruikt voor het detecteren van de huid. \textcite{dhivakar2015} hebben een methode uitgebracht zodat het RGB model toch in staat is om gezichten te detecteren. Het systeem is robuust genoeg om het gezicht in verschillende lichtomstandigheden, huidskleuren, posities en groottes te detecteren \ref{fig:rgb}.  
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{rgb_comparison.png}
+    \caption{\textbf{A}: Originele afbeelding en \textbf{B} verwerkte afbeelding via het RGB model. Bron: \autocite{Kumar2019}}
+    \label{fig:rgbref}
+\end{figure}
+\paragraph{HSV Color Model}
+Bij het HSV-kleurmodel worden de kleuren voorgesteld als Hue (H), Saturation (S) en Intensity Value (V) \autocite{Kumar2019}. Hue verwijst naar de kleuren rood, groen, blauw en geel. Dit kan een bereik hebben van 0 tot 360. Saturation is dan weer de zuiverheid  van een kleur. Dit varieert van 0 tot 100\%. Tenslotte refereert Value naar de helderheid van het kleur en zorgt voor een neutraal idee van het kleur \autocite{Hashem2009}. Vanuit dit model zullen zowel de Hue als Saturation de nodige informatie verzorgen over de huidskleur \ref{fig:hsvref}. 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{hsv_comparison.png}
+    \caption{\textbf{A}: Originele afbeelding en \textbf{B} verwerkte afbeelding via het HSV model. Bron: \autocite{Kumar2019}}
+    \label{fig:hsvref}
+\end{figure}
+De transformatie tussen HSV en RGB is niet-lineair \autocite{crowley1996}. In het HSV-kleurmodel is Hue niet betrouwbaar voor de discriminatietaak wanneer dat de Saturation laag is. Echter wordt het HSV-kleurmodel meer overwogen dan het RGB-kleurmodel op vlak van kleurbeschrijving.
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.75\textwidth]{ycbcr_comparison.png}
+    \caption{\textbf{A}: Originele afbeelding en \textbf{B} verwerkte afbeelding via het YCbCr model. Bron: \autocite{Kumar2019}}
+    \label{fig:ycbcrfig}
+\end{figure}
+\paragraph{YCbCr Color Model}
+Het YCbCr-kleurmodel wordt voorgesteld als helderheid (Y) en chrominantie (Cb en Cr). Het verdeelt de afbeeldingen in zowel een licht- als chrominantiecomponent. De waarde van de Y ligt tussen 16 en 235 waarbij 16 begint bij de zwarte en 235 bij de witte kleuren. Cb en Cr hebben beide een bereik van 16 tot 240. In dit model is de verdeling van de huidgebieden consistent over verschillende rassen in de Cb- en Cr-kleurruimtes \autocite{Zhu2012a, Zhu2012b}. Omdat her RGB-model lichtgevoelig is, wordt dit kleurenmodel gebruikt om zo de prestaties van kleurenclustering van de huid te verbeteren. De chrominantiecomponenten zijn bijna onafhankelijk van het licht en is er een niet-lineaire relatie tussen het Cb en Cr (chrominantie) en Y (luminantie) van de huidskleur in zowel het hoge als lage luminantiegebied  \autocite{agui1992}. Het grootste voordeel van het YCbCr-model, is dat de beïnvloeding van de luminantie verwijderd kan worden tijdens het verwerken van de afbeelding \autocite{Kumar2019} \ref{fig:ycbcrfig}.
+
+\subsubsection{Motion Base}
+Wanneer er een videosequentie wordt gebruikt, zorgt de bewegingsinformatie ervoor dat het bewegend object te lokaliseren is. De bewegende gezichten kunnen uitgetrokken worden door eenvoudigweg een drempelwaarde aan de verschillende frameverschillen te linken \autocite{HJELMAS}.
+
+\subsubsection{Gray Scale Base}
+Grijze informatie kan ook behandeld worden om belangrijke kenmerken uit het gezicht te verkrijgen. Gezichtskenmerken zoals wenkbrauwen en lippen zijn vaker donkerder dan de omliggende gebieden \autocite{COOTES1992}. Er zijn verschillende kenmerkalgoritmes die, om de gezichtskenmerken er uit te halen, zoeken naar lokale en minimale grijze gebieden binnenin specifieke gezichtsgebieden. In deze algoritmes wordt de afbeelding eerst versterkt door het uittrekking van contrasten en worden grijsschalige morfologische routines toegepast. Dit zorgt dat de kwaliteit van de lokale donkere plekken verbeterd worden waardoor de detectie makkelijker wordt. Vervolgens zal een low-level drempelwaarde gebaseerde methode er voor zorgen dat die donkere plekken er kunnen worden uitgehaald \autocite{HJELMAS}.
+
+\subsubsection{Edge Base}
+\textcite{sakai1972} hebben ervoor gezorgd dat het gezicht te detecteren valt op basis van de omtrek. Dit is gebaseerd op het analyseren van lijntekeningen van gezichten, waarvan het doel is om de kenmerken te detecteren. Vervolgens werd er een hiërarchisch framework voorgesteld door \textcite{CRAW1987} om de uitlijnen van het hoofd te traceren. \textcite{anila2010} hebben een simpel en snel systeem gepresenteerd om het gezicht te detecteren. Dit heeft drie stappen. Allereerst worden de afbeeldingen verbeterd door het toepassen van een median filter, wat zorgt voor ruisverwijdering, en een histogramegalisatie voor het aanpassen van het contrast. Vervolgens wordt de randafbeelding gemaakt uit de verbeterde afbeeldingen door de Sobel-operator toe te passen. Tenslotte wordt er een nieuw randvolg-algoritme toegepast om zo de verschillende subvensters uit de verbeterde afbeelding te halen. Om die subvensters te kunnen identificeren als het om een gezicht of niet ging, werd er het Black Propagation Neural Network (BPN) algoritme toegepast.
