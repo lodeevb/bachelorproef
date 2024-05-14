@@ -15,3 +15,10 @@ Ik heb besloten om de applicatie te ontwikkelen in Kotlin. Sinds de Google I/O c
     \item \textbf{Kotlin wordt ondersteunt in Jetpack libraries}: De aanbevolen moderne toolkit om een native UI in Kotlin te bouwen is Jetpack Compose. KTX-extenties voegen ook taalfunctionaliteiten van Kotlin toe. Deze zijn coroutines, extension functions, lambdas en genoemde parameters aan andere Android libraries.
     \item \textbf{Ondersteuning voor multiplatform development}: Kotlin Multiplatform zorgt ervoor dat de development niet enkel voor Android gebruikers is, maar ook voor iOS, backend en webapplicaties.
 \end{itemize}
+
+\subsection{MediaPipe}
+Om het gezicht te kunnen detecteren heb ik gekozen om MediaPipe Solutions te gebruiken. Dit biedt een variatie van verschillende libraries en tools om snel en eenvoudig kunstmatige intelligentie (AI) en machine learning (ML) technieken kunt toepassen in je applicaties. Solutions maakt deel uit van het open source project MediaPipe, dit houdt in dat je de oplossingen makkelijk kunt aanpassen aan je behoeftes en je ze kan gebruiken op meerdere platformen.
+\subsubsection{Face Detection}
+Ik had er eerst voor gekozen om MediaPipe zijn Face Detection solution te gebruiken. Dit zette mij in staat om het gezicht te kunnen detecteren en er vervolgens een vierkant rond te zetten. Nadien kon je de punten van interesse op zetten. Dit wil zeggen dat je kon aanduiden via een stip waar de ogen, mond, neus en oren zich bevonden. Al snel kwam ik er achter dat MediaPipe over een ander soort solution beschikte die mij meer kon helpen.
+\subsubsection{Face Landmark Detection}
+Deze solution zorgde ervoor dat ik een betere representatie had van het gezicht. Dit was in staat om zowel het gezicht te detecteren als de expressie. Het maakt gebruik van ML modellen die kunnen werken met zowel enkele afbeeldingen als een stroom van afbeeldingen. De output van deze solution was een virtuele avatar. Het maakte drie-dimensionele landmark punten op het gezicht. Bovendien gaf het ook een score van welke expressie het detecteert. 
