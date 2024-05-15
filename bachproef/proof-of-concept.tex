@@ -1,5 +1,6 @@
 \chapter{\IfLanguageName{dutch}{Proof-of-Concept}{Proof-of-Concept}}%
 \label{ch:proof-of-concept}
+
 \section{Introductie}
 Als PoC heb ik besloten om een mobiele applicatie te ontwikkelen. Deze applicatie is in staat om het gezicht te detecteren en er bepaalde kenmerken uit te halen om vervolgens de vermoeidheid te berekenen. De reden waarom ik er voor koos om een mobiele applicatie te maken is vrij simpel. Tegenwoordig gebruikt iedereen wel een houdertje om zijn/haar gsm in te stoppen tijdens het rijden. Vaak is dit ook op de bestuurder gericht. Doordat dan onrechtstreeks de camera vaak op de bestuurder gericht staat, kan de applicatie vervolgens het gezicht detecteren en zo de conclusie er uit halen of hij al dan niet vermoeid is.
 
@@ -22,3 +23,228 @@ Om het gezicht te kunnen detecteren heb ik gekozen om MediaPipe Solutions te geb
 Ik had er eerst voor gekozen om MediaPipe zijn Face Detection solution te gebruiken. Dit zette mij in staat om het gezicht te kunnen detecteren en er vervolgens een vierkant rond te zetten. Nadien kon je de punten van interesse op zetten. Dit wil zeggen dat je kon aanduiden via een stip waar de ogen, mond, neus en oren zich bevonden. Al snel kwam ik er achter dat MediaPipe over een ander soort solution beschikte die mij meer kon helpen.
 \subsubsection{Face Landmark Detection}
 Deze solution zorgde ervoor dat ik een betere representatie had van het gezicht. Dit was in staat om zowel het gezicht te detecteren als de expressie. Het maakt gebruik van ML modellen die kunnen werken met zowel enkele afbeeldingen als een stroom van afbeeldingen. De output van deze solution was een virtuele avatar. Het maakte drie-dimensionele landmark punten op het gezicht. Bovendien gaf het ook een score van welke expressie het detecteert. 
+
+\section{Implementatie}
+De implementatie van de Proof of Concept (PoC) is onderverdeeld in enkele stappen. Elke stap draagt bij aan het geheel van de applicatie.
+
+\subsection{Algemeen}
+\subsubsection{Navigatie}
+Eerst en vooral wordt er een navigatie voorzien. Hierin bevinden zich twee fragments. Zo heb je een \emph{PermissionFragment} en \emph{CameraFragment}. Dit gebeurt zodat de overschakeling van het ene fragment naar het andere fragment soepeler verloopt.
+\begin{lstlisting}[language=Kotlin, caption=nav\_graph.xml]
+    <navigation xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/nav_graph"
+        app:startDestination="@id/permissions_fragment"> 
+    </navigation>
+\end{lstlisting}
+\begin{itemize}
+    \item \textbf{xmlns:android}: De XML-namespace voor standaard Android-attributen
+    \item \textbf{xmlns:app}: De XML-namespace voor aangepaste attributen.
+    \item \textbf{xmlns:id}: De unieke ID voor de layout.
+    \item \textbf{xmlns:starDestination}: Het fragment dat als eerst moet worden weergegeven als de applicatie is opgestart.
+\end{itemize}
+
+\subsubsection{CoordinatorLayout}
+Bepaalde fragments bestaan uit verschillende views. Deze views worden samen in een  \emph{CoordinatorLayout} gezet. Dit maakt coördinatie tussen de verschillende views mogelijk. Zo kun je meerdere views in één fragment hebben.
+\begin{lstlisting}[language=Kotlin, caption=CoordinatorLayout]
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/camera_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+\end{lstlisting}
+
+\begin{itemize}
+    \item \textbf{xmlns:android}: De XML-namespace voor standaard Android-attributen
+    \item \textbf{xmlns:app}: De XML-namespace voor aangepaste attributen.
+    \item \textbf{xmlns:id}: De unieke ID voor de layout.
+    \item \textbf{xmlns:layout\_width}: Breedte van de layout. Deze staat ingesteld op \emph{match\_parent} om de volledige breedte van het scherm te gebruiken.
+    \item \textbf{xmlns:layout\_height}: Hoogte van de layout. Deze staat ingesteld op \emph{match\_parent} om de volledige hoogte van het scherm te gebruiken.
+\end{itemize}
+
+
+\subsection{Camera}
+De implementatie van de PoC begint met het initialiseren van de camera. De camera is een cruciaal onderdeel van de applicatie omdat deze de input levert voor de verdere verwerking en analyse. Zonder een goed werkende camera kan de applicatie niet functioneren zoals bedoeld.
+
+Voor deze applicatie maak ik gebruik van de CameraX bibiliotheek, die een eenvoudige en consistente API biedt voor cameratoegang en -beheer voor verschillende Android apparaten. In deze sectie toon ik even aan hoe het gebruik van de camera tot stand is gekomen.
+
+\subsubsection{PermissionFragment}
+Uiteraard heb ik toestemming nodig van de gebruiker om de camera te mogen gebruiken. Hiervoor is er een \emph{PermissionFragment} voorzien. Dit toont zich ook in de navigatie. Dit ziet er als volgt uit:
+\begin{lstlisting}[language=Kotlin, caption=PermissionFragment]
+    <fragment
+    android:id="@+id/permissions_fragment"
+    android:name="com.example.bach_poc.fragments.PermissionsFragment"
+    android:label="PermissionsFragment">
+    
+    <action
+    android:id="@+id/action_permissions_to_camera"
+    app:destination="@id/camera_fragment"
+    app:popUpTo="@id/permissions_fragment"
+    app:popUpToInclusive="true" />
+    </fragment>
+\end{lstlisting}
+De belangrijkste attributen van de fragment tag zijn \emph{android:id} en \emph{android:name}. Het eerste attribuut is de unieke ID van het fragment binnenin de navigatie. Deze ID wordt dus ook gebruikt om naar dit fragment te verwijzen bij navigatieacties. Het tweede attribuut is de naam van de klasse van het fragment. In dit geval zal er de klasse \emph{PermissionsFragment} gebruikt worden. Binnen in de action tag zijn er nog andere attributen. Zo heb je \emph{app:destination}, wat de bestemming van de navigatieactie is, \emph{app:popUpTo}, wat specificeert tot welk punt de backstack gewist zal worden en \emph{app:popUpToInclusive}, wat er voor zorgt dat 'permissions\_fragment' ook uit de backstack gewist zal worden.
+
+Nu zal er wat uitleg gegeven worden over wat er precies in de klasse \emph{PermissionsFragment.kt} zit. Om aan te tonen dat deze klasse een fragment is, zal het dan ook overerven van \emph{Fragment}. Deze heeft een methode \emph{onCreate} die wordt opgeroepen om de gebruikersinterface te creëren.
+\begin{lstlisting}[language=Kotlin,caption=override fun onCreate(savedInstanceState: Bundle?) in PermissionsFragment.kt]
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        when {
+            ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.CAMERA
+            ) ==
+            PackageManager.PERMISSION_GRANTED -> {
+                navigateToCamera()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+\end{lstlisting}
+Zodra de fragment gemaakt wordt, wordt de basisimplementatie van \emph{Fragment} uitgevoerd. Vervolgens wordt er gecontroleerd of de benodigde permissie verleend is. Dit gebeurt in de \emph{when} conditie. Die gaat de permissie voor de camera ophalen en controleren of hij al dan niet verleend is, dit gebeurt door de conditie in de accolades na \emph{when}. Dit haalt de context van het fragment op inclusief \emph{Manifest.permission.CAMERA}, wat de constante is die de camera-permissie vertegenwoordigt. Vervolgens kijkt hij of de permissie wel degelijk toegelaten is (\emph{PackageManager.PERMISSION\_GRANTED}). Indien de permissie niet is toegelaten, zal hij de popup lanceren die vraagt naar de toestemming.
+
+\begin{lstlisting}[language=Kotlin, caption=requestPermissionLauncher in PermissionsFragment.kt]
+    private val requestPermissionLauncher =
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+        if (isGranted) {
+            Toast.makeText(
+            context,
+            "Permission request granted",
+            Toast.LENGTH_LONG
+            ).show()
+            navigateToCamera()
+        } else {
+            Toast.makeText(
+            context,
+            "Permission request denied",
+            Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+\end{lstlisting}
+Hierbij wordt er een \emph{ActivityResultLauncher} gelanceerd. Die zal de permissieaanvraag uitvoeren. De callbackfunctie \emph{isGranted} zal de boolean opslaan en zal vervolgens een passend bericht aan tonen als de aanvraag geaccepteerd of afgewezen is.
+
+\begin{lstlisting}[language=Kotlin, caption=navigateToCamera() in PermissionsFragment.kt]
+    private fun navigateToCamera() {
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                Navigation.findNavController(
+                requireActivity(),
+                R.id.fragment_container
+                )
+                .navigate(R.id.camera_fragment)
+            }
+        }
+    }
+    
+\end{lstlisting}
+Deze functie wordt uitgevoerd indien de permissie van de camera wel toegelaten is. Er wordt een nieuwe coroutine gestart door \emph{lifecycleScope.launch}. Een coroutine is gekoppeld aan de levenscyclus van een fragment, in dit geval van \emph{PermissionsFragment.kt}. Dit wil zeggen dat het dus geannuleerd wordt indien het fragment of de activiteit 'vernietigd' wordt. Door de regel \emph{lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED)} zal de code binnenin dat codeblock enkel uitgevoerd worden wanneer het fragment in de toestand 'STARTED' is. Vervolgens wordt er genavigeerd naar het fragment met id \emph{camera\_fragment} vanuit de huidige fragment.
+
+\begin{lstlisting}[language=Kotlin, caption=companion object van PermissionsFragment.kt]
+private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
+
+companion object {
+    fun hasPermissions(context: Context) =
+    PERMISSIONS_REQUIRED.all {
+        ContextCompat.checkSelfPermission(
+        context,
+        it
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+}
+\end{lstlisting}
+Dit is het \emph{companion object} van \emph{PermissionsFragment}. Deze functie is gekoppeld aan de definitie van de klasse, wat dus wilt zeggen is dat het de functie zal uitvoeren bij het instantiëren. In dit geval return de functie een \emph{boolean} om te kijken of de permissies die in \emph{PERMISSIONS\_REQUIRED} staan zijn toegelaten of niet.
+
+\subsubsection{CameraFragment}
+Net zoals \emph{PermissionFragment} erft \emph{CameraFragment} ook over van \emph{Fragment}, maar ook van \emph{FaceLandmarkerHelper.LandmarkListener}, waar nog verdere uitleg over zal gegeven worden.
+In tegenstelling tot de \emph{PermissionsFragment} beschikt deze fragment over enkele variabelen die in het geheel van de klasse worden gebruikt. Deze variabelen zullen vermeld worden bij de methodes die ze gebruiken.
+
+\begin{lstlisting}[language=Kotlin, caption=onCreateView in CameraFragment.kt]
+    private var _fragmentCameraBinding: FragmentCameraBinding? = null
+    private val fragmentCameraBinding get() = _fragmentCameraBinding!!
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?): View?
+        {
+            _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater,container,false)
+    
+            return fragmentCameraBinding.root
+        }
+\end{lstlisting}
+Deze methode wordt uitgevoerd terwijl de view wordt aangemaakt. De variabele \emph{\_fragmentCameraBinding} is een gegenereerde klasse dat overeenkomt met de layout file van het fragment (\emph{fragment\_camera.xml}). Nadien wordt de variabele \emph{fragmentCameraBinding} gebruikt als een \emph{get()} functie om het fragment effectief te verkrijgen. De methode \emph{onCreateView} gaat de view van de camera maken. Dit doet hij door het fragment 'op te blazen' met de view, wat dus wilt zeggen dat de view in de layout wordt gestopt. Daarna wordt de top-level view gereturned (\emph{fragmentCameraBinding.root}).
+
+\begin{lstlisting}[language=Kotlin, caption=onViewCreated in CameraFragment.kt]
+    private lateinit var backgroundExecutor: ExecutorService
+    
+     private val faceBlendshapesResultAdapter by lazy {
+        FaceBlendshapesResultAdapter()
+    }
+    
+    
+    @SuppressLint("MissingPermission")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
+        with(fragmentCameraBinding.recyclerviewResults) {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = faceBlendshapesResultAdapter
+        }
+        
+        backgroundExecutor = Executors.newSingleThreadExecutor()
+        
+        fragmentCameraBinding.viewFinder.post {
+            setUpCamera()
+        }
+        
+        backgroundExecutor.execute {
+            faceLandmarkerHelper = FaceLandmarkerHelper(
+            context = requireContext(),
+            minFaceDetectionConfidence = 0.5F,
+            minFacePresenceConfidence = 0.5F,
+            minFaceTrackingConfidence = 0.5F,
+            maxNumFaces = 1,
+            currentDelegate = 0,
+            faceLandmarkerHelperListener = this
+            )
+        }
+    }
+\end{lstlisting}
+Deze methode maakt gebruik van een \emph{ExecutorService}. Dit is een extensie van \emph{Executor}. Deze service zorgt er voor dat er asynchrone taken uitgevoerd kunnen worden. De \emph{@SuppressLint(`MissingPermission`)} is een annotatie dat de lint-waarschuwing onderdrukt voor ontbrekende toestemmingen, deze zijn namelijk al behandeld in \emph{PermissionFragment}. Nadat de view gemaakt is, wordt dit allemaal uitgevoerd. De \emph{RecyclerView} van de layout wordt eerst opgehaald in het \emph{with} blok, dit zal later nog uitgelegd worden. De \emph{layoutManager} is hetgeen wat de layout zal beheren, de adapter wordt ingesteld als een hulpklasse van \emph{FaceBlendshapesResultAdapter}, dit is verantwoordelijk voor het weergeven van de resultaten van de gezichtsanalyse en zal nog verder uitgelegd worden. Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond.
+
+\begin{lstlisting}[language=Kotlin, caption=setUpCamera in CameraFragment.kt]
+    private var cameraProvider: ProcessCameraProvider? = null
+    
+    private fun setUpCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        cameraProviderFuture.addListener(
+        {
+            cameraProvider = cameraProviderFuture.get()
+            
+            bindCameraUseCases()
+        },
+        ContextCompat.getMainExecutor(requireContext())
+        )
+    }
+\end{lstlisting}
+Hier wordt de camera klaargemaakt voor gebruik. Er wordt eerst een 
+
+
+De view van de camera ziet er als volgt uit
+\begin{lstlisting}[language=Kotlin, caption=CameraView]
+    <androidx.camera.view.PreviewView
+        android:id="@+id/view_finder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:scaleType="fitStart"/>
+\end{lstlisting}
+De attributen doen hetzelfde als bij \emph{CoordinatorLayout}, behalve \emph{scaleType}, wat ingesteld staat op \emph{fitStart}. Dit zorgt er voor dat de preview wordt aangepast om binnen in de `containerview` te passen.
+
+
+
+
