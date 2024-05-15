@@ -215,7 +215,11 @@ Deze methode wordt uitgevoerd terwijl de view wordt aangemaakt. De variabele \em
         }
     }
 \end{lstlisting}
-Deze methode maakt gebruik van een \emph{ExecutorService}. Dit is een extensie van \emph{Executor}. Deze service zorgt er voor dat er asynchrone taken uitgevoerd kunnen worden. De \emph{@SuppressLint(`MissingPermission`)} is een annotatie dat de lint-waarschuwing onderdrukt voor ontbrekende toestemmingen, deze zijn namelijk al behandeld in \emph{PermissionFragment}. Nadat de view gemaakt is, wordt dit allemaal uitgevoerd. De \emph{RecyclerView} van de layout wordt eerst opgehaald in het \emph{with} blok, dit zal later nog uitgelegd worden. De \emph{layoutManager} is hetgeen wat de layout zal beheren, de adapter wordt ingesteld als een hulpklasse van \emph{FaceBlendshapesResultAdapter}, dit is verantwoordelijk voor het weergeven van de resultaten van de gezichtsanalyse en zal nog verder uitgelegd worden. Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond.
+Deze methode maakt gebruik van een \emph{ExecutorService}. Dit is een extensie van \emph{Executor}. Deze service zorgt er voor dat er asynchrone taken uitgevoerd kunnen worden. De \emph{@SuppressLint(`MissingPermission`)} is een annotatie dat de lint-waarschuwing onderdrukt voor ontbrekende toestemmingen, deze zijn namelijk al behandeld in \emph{PermissionFragment}. Nadat de view gemaakt is, wordt dit allemaal uitgevoerd.
+
+De \emph{RecyclerView} van de layout wordt eerst opgehaald in het \emph{with} blok, dit zal later nog uitgelegd worden. De \emph{layoutManager} is hetgeen wat de layout zal beheren, de adapter wordt ingesteld als een hulpklasse van \emph{FaceBlendshapesResultAdapter}, dit is verantwoordelijk voor het weergeven van de resultaten van de gezichtsanalyse en zal nog verder uitgelegd worden.
+
+Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond.
 
 \begin{lstlisting}[language=Kotlin, caption=setUpCamera in CameraFragment.kt]
     private var cameraProvider: ProcessCameraProvider? = null
@@ -232,8 +236,85 @@ Deze methode maakt gebruik van een \emph{ExecutorService}. Dit is een extensie v
         )
     }
 \end{lstlisting}
-Hier wordt de camera klaargemaakt voor gebruik. Er wordt eerst een 
+Hier wordt de camera klaargemaakt voor gebruik. Deze methode instantieert de variabele \emph{cameraProvider}. Dit is een singleton wat gebruikt wordt om de levenscyclus van de camera aan te koppelen. Binnenin de functie wordt de instantie van de huidige context van de applicatie gedeclareerd aan een nieuwe variabele. Vervolgens wordt er een \emph{listener} toegevoegd aan de instantie.
 
+De code binnenin de accolades van de \emph{addListener} wordt uitgevoerd zodra de algemene executor van de context wordt opgehaald in \emph{ContextCompat.getMainExecutor(requireContext())}. In die blok van code wordt de \emph{cameraProvider} gedeclareerd en worden de usecases van de camera ingesteld (\emph{bindCameraUseCases}).
+
+\begin{lstlisting}[language=Kotlin, caption=bindCameraUseCases in CameraFragment.kt]
+    private var preview: Preview? = null
+    private var imageAnalyzer: ImageAnalysis? = null
+    private var camera: Camera? = null
+    private fun bindCameraUseCases() {
+     
+        val cameraProvider = cameraProvider?: throw IllegalStateException("Camera initialization failed.")
+        
+     
+        val cameraSelector = CameraSelector.Builder()
+        .requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
+        
+        val screenSize = Size(640, 480)
+        val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
+        ResolutionStrategy(screenSize,
+        ResolutionStrategy.FALLBACK_RULE_NONE)
+        ).build()
+        
+        preview = Preview.Builder()
+        .setResolutionSelector(resolutionSelector)
+        .build()
+        
+        
+        imageAnalyzer = ImageAnalysis.Builder()
+        .setResolutionSelector(resolutionSelector)
+        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+        .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
+        .build()
+        .also {
+            it.setAnalyzer(backgroundExecutor) { image ->
+                detectFace(image)
+            }
+        }
+        
+        
+        cameraProvider.unbindAll()
+        
+        try {
+            camera = cameraProvider.bindToLifecycle(
+            this,
+            cameraSelector,
+            preview,
+            imageAnalyzer
+            )
+            
+            preview?.setSurfaceProvider(fragmentCameraBinding.viewFinder.surfaceProvider)
+        } catch (exc: Exception) {
+            Log.e(TAG, "Use case binding failed", exc)
+        }
+    }
+\end{lstlisting} 
+Deze methode heeft nood aan wat extra variabelen. We maken gebruik van \emph{Camera}, \emph{Preview} en \emph{ImageAnalyzer}. Eerst en vooral wordt er gekeken of de \emph{cameraProvider} al dan niet bestaat. Indien hij niet bestaat, zal er een \emph{IllegalStateException} gegooid worden. 
+
+Vervolgens wordt de richting van de camera ingesteld. Dit gebeurt door \emph{CameraSelector.Builder().requireLensFacing(CameraSelector.LENS\_FACING\_FRONT).build()}. Dit roept de interface van de camera op en laat zo weten dat we behoefte hebben aan het gebruik van de selfie-camera.
+
+Voor dat de preview van de camera gebuild wordt, zodat we ons zelf kunnen zien, is er nood aan het instellen van een \emph{ResolutionSelector}. Dit stelt de resolutie van de \emph{UseCase} in. De schermgrootte wordt ingesteld op 640x480 pixels en wordt vervolgens gebruikt om een \emph{ResolutionStrategy} in te stellen. Tenslotte kan zo de \emph{ResolutionSelector} van de \emph{UseCase} gebuild worden. 
+ 
+Nadat we een resolutie hebben, kan de \emph{Preview} gemaakt worden. De \emph{Preview} zorgt er voor dat we de camera kunnen bekijken die gebruikt wordt, we kunnen onszelf dus zien. 
+
+Nadien wordt er een \emph{ImageAnalyzer} gedeclareerd. Dit zorgt ervoor dat we het beeld kunnen analyseren dat wordt opgenomen. Deze analyzer gebruikt dezelfde instellingen voor de resolutie als die van de camera. Dit doe ik zodat het camerabeeld direct geanalyseerd kan worden en niet eerst nog omgezet moet worden naar eventueel een andere resolutie voor de analyse. De \emph{.setBackpressureStrategy} wordt ingesteld op \emph{STRATEGY\_KEEP\_ONLY\_LATEST}. Dit wilt zeggen dat enkel de laatste \emph{image} wordt doorgestuurd naar de analyzer, de voorgaande worden dus gedropt. Dit is noodzakelijk doordat sommige frames sneller verstuurd worden dan dat ze geanalyseerd worden. De analyzer zal de images die hij moet analyseren ontvangen in \emph{RGBA\_8888} formaat. Het wordt dus verstuurd met een Rood, Groen, Blauw en Alpha waarde. De 8888 staat voor het aantal bits dat gebruikt wordt om elke waarde te coderen. Dit is het standaardformaat. Tenslotte wordt de analyzer gebuild en zal er een analyzer voor de \emph{backgroundExecutor} ingesteld worden, die zal op de achtergrond het gezicht detecteren van de image.
+
+Voordat er nieuwe use cases aan de \emph{cameraProvider} gebonden kunnen worden, moeten ze eerst ontbonden worden. Dit gebeurt door \emph{.unbindAll()}. Dit zorgt er voor dat, indien er andere fragments bestaan die ook bindingen hebben aan de provider, al de bindingen zich ontbinden.
+
+Als laatste stap worden de 3 use cases: \emph{CameraSelector}, \emph{Preview} en \emph{ImageAnalysis} gebonden aan de levenscyclus van de cameraprovider en het oppervlak van de \emph{viewFinder} zich aan de preview binden. Indien dat niet lukt, zal er zich een error voordoen.
+
+\begin{lstlisting}[language=Kotlin, caption=detectFace in CameraFragment.kt]
+    
+    private fun detectFace(imageProxy: ImageProxy){
+        faceLandmarkerHelper.detectLivestream(
+        imageProxy = imageProxy
+        )
+    }
+    
+\end{lstlisting}
+De methode \emph{detectFace} gaat het beeld van de \emph{ImageAnalyzer} nemen en gaat de methode \emph{detectLiveStream(ImageProxy imageProxi)} oproepen die in de \emph{FaceLandmarkerHelper} staat.
 
 De view van de camera ziet er als volgt uit
 \begin{lstlisting}[language=Kotlin, caption=CameraView]
