@@ -219,7 +219,7 @@ Deze methode maakt gebruik van een \emph{ExecutorService}. Dit is een extensie v
 
 De \emph{RecyclerView} van de layout wordt eerst opgehaald in het \emph{with} blok, dit zal later nog uitgelegd worden. De \emph{layoutManager} is hetgeen wat de layout zal beheren, de adapter wordt ingesteld als een hulpklasse van \emph{FaceBlendshapesResultAdapter}, dit is verantwoordelijk voor het weergeven van de resultaten van de gezichtsanalyse en zal nog verder uitgelegd worden.
 
-Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond.
+Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond. De parameters van deze klasse worden later besproken.
 
 \begin{lstlisting}[language=Kotlin, caption=setUpCamera in CameraFragment.kt]
     private var cameraProvider: ProcessCameraProvider? = null
@@ -316,16 +316,234 @@ Als laatste stap worden de 3 use cases: \emph{CameraSelector}, \emph{Preview} en
 \end{lstlisting}
 De methode \emph{detectFace} gaat het beeld van de \emph{ImageAnalyzer} nemen en gaat de methode \emph{detectLiveStream(ImageProxy imageProxi)} oproepen die in de \emph{FaceLandmarkerHelper} staat.
 
-De view van de camera ziet er als volgt uit
-\begin{lstlisting}[language=Kotlin, caption=CameraView]
-    <androidx.camera.view.PreviewView
-        android:id="@+id/view_finder"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:scaleType="fitStart"/>
+We zien dat \emph{CameraFragment} overerft van \emph{FaceLandMarkerHelper.Listener}. Dit is een interface die in \emph{FaceLandmarkerHelper} staat. Deze beschikt over 3 methodes: \emph{onError}, \emph{onEmpty} en \emph{onResults}.
+\begin{lstlisting}[language=Kotlin, caption=onError in CameraFragment.kt]
+override fun onError(error: String, errorCode: Int) {
+    activity?.runOnUiThread {
+        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+        faceBlendshapesResultAdapter.updateResults(null)
+        faceBlendshapesResultAdapter.notifyDataSetChanged()
+    }
+}
 \end{lstlisting}
-De attributen doen hetzelfde als bij \emph{CoordinatorLayout}, behalve \emph{scaleType}, wat ingesteld staat op \emph{fitStart}. Dit zorgt er voor dat de preview wordt aangepast om binnen in de `containerview` te passen.
+Dit zorgt ervoor dat de gebruiker op de hoogte wordt gebracht indien er zich een fout voordoet. Als er effectief een fout voorkomt, zullen de resultaten op \emph{null} worden ingesteld en wordt er aan \emph{faceBlendshapesResultdAdapter} gecommuniceerd dat de dataset veranderd is.
 
+\begin{lstlisting}[language=Kotlin, caption=onEmpty in CameraFragment.kt]
+    override fun onEmpty() {
+        fragmentCameraBinding.overlay.clear()
+        activity?.runOnUiThread {
+            faceBlendshapesResultAdapter.updateResults(null)
+            faceBlendshapesResultAdapter.notifyDataSetChanged()
+        }
+    }
+\end{lstlisting}
+Deze methode zal er voor zorgen dat de applicatie reageert als er geen gezicht wordt gedetecteerd. Hij wist ook de mogelijke visuele overlay en zal ook de resultaten op \emph{null} gezet worden.
 
+\begin{lstlisting}[language=Kotlin, caption=onResults in CameraFragment.kt]
+    override fun onResults(resultBundle: FaceLandmarkerHelper.ResultBundle) {
+        activity?.runOnUiThread {
+            if (_fragmentCameraBinding != null) {
+                if (fragmentCameraBinding.recyclerviewResults.scrollState != SCROLL_STATE_DRAGGING) {
+                    faceBlendshapesResultAdapter.updateResults(resultBundle.result)
+                    faceBlendshapesResultAdapter.notifyDataSetChanged()
+                }
+                
+                fragmentCameraBinding.overlay.setResults(
+                resultBundle.result,
+                resultBundle.inputImageHeight,
+                resultBundle.inputImageWidth,
+                )
+                fragmentCameraBinding.overlay.invalidate()
+            }
+        }
+    }
+\end{lstlisting}
+Deze methode zal de resultaten van de camera doorgeven aar \emph{faceBlendshapesResultAdapater} indien er niet gescrolled wordt op de applicatie. Vervolgens zullen de resultaten ook doorgegeven worden aan het overlay component. Dit component zal tonen waar het gezicht gedetecteerd is.
 
+\subsection{Face Landmark Detectie}
+Om het gezicht te kunnen detecteren en weer te geven aan de gebruiker, zijn er enkele hulpklassen gemaakt. Deze klassen zorgen ervoor dat het doorgegeven beeld gebruikt kan worden om daarop het gezicht te detecteren en nadien een visueel beeld kan returnen van de landmarks.
+
+\subsubsection{FaceLandmarkerHelper}
+Deze klasse zal het gezicht op het beeld detecteren. Dit kan gezien worden als de basis van de gezichtsdetectie. Nu zullen de methoden die gebruikt zijn in deze klasse uitgelegd worden. Voor dat we de verder duiken in deze klasse, zal er eerst wat informatie gegeven worden over het \emph{companion object} zodat we toegang hebben tot verschillende constanten bij het aanmaken van deze klasse.
+
+\begin{lstlisting}[language=Kotlin, caption=companion object van FaceLandmarkerHelper.kt]
+    companion object {
+        const val TAG = "FaceLandmarkerHelper"
+        private const val MP_FACE_LANDMARKER_TASK = "face_landmarker.task"
+        
+        const val DELEGATE_CPU = 0
+        const val DELEGATE_GPU = 1
+        const val DEFAULT_FACE_DETECTION_CONFIDENCE = 0.5F
+        const val DEFAULT_FACE_TRACKING_CONFIDENCE = 0.5F
+        const val DEFAULT_FACE_PRESENCE_CONFIDENCE = 0.5F
+        const val DEFAULT_NUM_FACES = 1
+        const val OTHER_ERROR = 0
+        const val GPU_ERROR = 1
+        
+    }
+\end{lstlisting}
+De constante \emph{TAG} wordt vooral gebruikt bij het loggen. Indien er zich dan een fout voordoet, kan er in de logs gekeken worden in welke klasse deze error zich voordoet. \emph{MP\_FACE\_LANDMARKER\_TASK} is de constante dat een relatie legt aan de \emph{task} die het detecteren zal volbrengen. Deze taak is in de \emph{assets} folder gezet. De overige constanten die ingesteld staan als parameters om de taak aan te passen.
+
+\begin{lstlisting}[language=Kotlin, caption=init() en setupFaceLandmarker() in FaceLandmarkerHelper.kt]
+    init {
+        setupFaceLandmarker()
+    }
+    
+    private var faceLandmarker: FaceLandmarker? = null
+    
+    fun setupFaceLandmarker() {
+        val baseOptionBuilder = BaseOptions.builder()
+        
+        when (currentDelegate) {
+            DELEGATE_CPU -> {
+                baseOptionBuilder.setDelegate(Delegate.CPU)
+            }
+            DELEGATE_GPU -> {
+                baseOptionBuilder.setDelegate(Delegate.GPU)
+            }
+        }
+        
+        baseOptionBuilder.setModelAssetPath(MP_FACE_LANDMARKER_TASK)
+        
+        if (faceLandmarkerHelperListener == null) {
+            throw IllegalStateException("faceLandmarkerHelperListener must be set when runningMode is LIVE_STREAM")
+        }
+        
+        try {
+            val baseOptions = baseOptionBuilder.build()
+            val optionsBuilder =
+            FaceLandmarker.FaceLandmarkerOptions.builder()
+            .setBaseOptions(baseOptions)
+            .setMinFaceDetectionConfidence(minFaceDetectionConfidence)
+            .setMinTrackingConfidence(minFaceTrackingConfidence)
+            .setMinFacePresenceConfidence(minFacePresenceConfidence)
+            .setNumFaces(maxNumFaces)
+            .setOutputFaceBlendshapes(true)
+            .setRunningMode(RunningMode.LIVE_STREAM)
+            .setResultListener(this::returnLivestreamResult)
+            .setErrorListener(this::returnLivestreamError)
+            
+            val options = optionsBuilder.build()
+            faceLandmarker = FaceLandmarker.createFromOptions(context,options)
+        } catch (e: IllegalStateException) {
+            faceLandmarkerHelperListener?.onError(
+            "Face Landmarker failed to initialize, See error logs for details"
+            )
+            Log.e(TAG, "MediaPipe failed to load the task with error" + e.message)
+        }
+        catch (e: RuntimeException) {
+            faceLandmarkerHelperListener?.onError(
+            "Face Landmarker failed to initialize. See error logs for " +
+            "details", GPU_ERROR
+            )
+            Log.e(TAG, "Face Landmarker failed to load model with error: " + e.message)
+        }
+    }
+\end{lstlisting}
+
+De klasse wordt geïnitialiseerd door een \emph{init()} methode. In die methode wordt \emph{setupFaceLandmarker} opgeroepen. Het grote beeld van deze methode is het gereedmaken van het gebruik van de \emph{Face Landmark detectie}.
+
+Eerst en vooral wordt er een \emph{BaseOptions} ingesteld. Die opties vormen de basis van de taak. Het eerste \emph{if} statement gaat selecteren wat de taak gaat uitvoeren. Dat kan zowel de CPU als de GPU zijn, afhankelijk van hoe het is ingesteld. In het geval van deze Proof of Concept is het de CPU. Doordat onze applicatie niet zo krachtig is, heeft het geen impact op de performance, je zou dus evengoed de GPU kunnen kiezen. De \emph{currentDelegate} wordt meegegeven als parameter en staat ingesteld op \textbf{\emph{var currentDelegate: Int = DELEGATE\_CPU}}. Er kan dus een andere delegate meegegeven worden indien dat gewenst is, anders zal de CPU gebruikt worden.
+
+Vervolgens wordt het pad van de taak ingesteld. Dit is de constante \emph{MP\_FACE\_LANDMARKER\_TASK} die we in het \emph{companion object} gedeclareerd hebben. Zo weet de \emph{BaseOptions} welke taak hij moet uitvoeren, in dit geval \emph{face\_landmarker.task}.
+
+Het \emph{if} statement nadat het \emph{assetPath} is ingesteld, kijkt of er wel een \emph{faceLandmarkerHelperListener} is. Ook dit is een parameter van deze klasse \textbf{\emph{var faceLandmarkerHelperListener: LandmarkListener? = null}}. Een \emph{LandmarkListener} is noodzakelijk wanneer de \emph{RUNNING.MODE} wordt ingesteld op livestream. Zo krijgen we een continue detectie en analyse. Eerder gezien in de \emph{onViewCreated} wordt \emph{CameraFragment} meegegeven als \emph{LandmarkListener}. Zo weet de taak of er nieuwe beelden binnenkomen, wat in dit geval constant is.
+
+Tenslotte wordt er een \emph{try catch} uitgevoerd. In het try gedeelte van de code wordt eerst en vooral de \emph{baseOptions} gebuild. Nadien wordt de \emph{optionsBuilder} samengesteld. Dit gaat de \emph{FaceLandmarker} builden. Daar horen enkele zaken bij:
+\begin{itemize}
+    \item \textbf{setBaseOptions}: De basisopties van de taak. In dit geval de delegate dat gebruikt wordt.
+    \item \textbf{setMinFaceDetectionConfidence(minFaceDetectionConfidence)}: De minimum zelfzekerheid score voor het gezicht dat moet voldoen om het detecteren een succes te noemen. Staat ingesteld op 0.5.
+    \item \textbf{setMinTrackingConfidence(minFaceTrackingConfidence)}: De minimum zelfzekerheid score voor het traceren van het gezicht. Staat ingesteld op 0.5.
+    \item \textbf{setMinFacePrsenceConfidence(minFacePresenseConfidence)}: De minimum zelfzekerheid score van het gezicht dat aanwezig is. Staat ingesteld op 0.5.
+    \item \textbf{setNumFaces(maxNumFaces)}: Het maximum aantal gezichten dat gedetecteerd kan worden. Staat ingesteld op 1.
+    \item \textbf{setOutputFaceBlendshapes(true)}: Dit zorgt ervoor dat het resultaat gebruikt kan worden voor het renderen van een 3D model.
+    \item \textbf{setRunningMode(RunningMode.LIVE\_STREAM)}: RunningMode van de taak. Sinds het \emph{LIVE\_STREAM} is, moet er een \emph{resultListener} worden meegegeven om de resultaten asynchroon te ontvangen.
+    \item \textbf{setResultListener(this::returnLiveStreamResult)}: Zorgt ervoor dat de resultaten asynchroon ontvangen worden. Kan enkel gebruikt worden als de RunningMode ingesteld staat op \emph{LIVE\_STREAM}
+    \item \textbf{setErrorListener(this::returnLiveStreamError)}: Optionele \emph{listener} die errors gaat afhandelen.
+\end{itemize}
+Al de parameters die hierboven zijn gebruikt, staan in het \emph{companion object}. Nadat de taak succesvol geconfigureerd is, zal hij gebouwd worden. Indien er ergens iets mis loopt in het \emph{try} blok, zijn er \emph{catch} blokken voorzien om de errors te melden.
+
+\begin{lstlisting}[language=Kotlin, caption=returnLiveStreamResult in FaceLandmarkerHelper.kt]
+    private fun returnLivestreamResult(
+    faceLandmarkerResult: FaceLandmarkerResult,
+    mpImage: MPImage
+    ) {
+        if (faceLandmarkerResult.faceLandmarks().size > 0) {
+            val finishTimeMs = SystemClock.uptimeMillis()
+            val inferenceTime = finishTimeMs - faceLandmarkerResult.timestampMs()
+            
+            faceLandmarkerHelperListener?.onResults(
+            ResultBundle(
+            faceLandmarkerResult,
+            inferenceTime,
+            mpImage.height,
+            mpImage.width
+            )
+            )
+        }
+        else {
+            faceLandmarkerHelperListener?.onEmpty()
+        }
+    }
+    
+    data class ResultBundle(
+        val result: FaceLandmarkerResult,
+        val inferenceTime: Long,
+        val inputImageHeight: Int,
+        val inputImageWidth: Int,
+    )
+\end{lstlisting}
+Deze methode zal het resultaat teruggeven van de detectie. Deze functie heeft als parameters \emph{FaceLandmarkerResult} en \emph{MPImage}. Het doel van deze functie is het controleren of er daadwerkelijk gezichten gedetecteerd zijn of niet. Indien dit het geval is, zal er berekend worden hoelang het geduurd heeft tot de resultaten. Dit gebeurt door \emph{inferenceTime}. Het is de tijd sinds de applicatie is opgestart - de tijd dat het geduurd heeft om een gezicht te detecteren. Tenslotte wordt er een \emph{ResultBundle} gemaakt. Daarin zit het resultaat, de tijd en de hoogte en breedte van de camerabeelden. Als er geen gezichten gedetecteerd zijn, zal de \emph{onEmpty()} functie opgeroepen worden.
+
+\begin{lstlisting}[]
+    private fun returnLivestreamError(runtimeException: RuntimeException) {
+        faceLandmarkerHelperListener?.onError(
+        runtimeException.message ?: "An unknown error has occurred"
+        )
+    }
+\end{lstlisting}
+Dit is de functie die een error zal werpen indien er zich een \emph{RuntimeException} voordoet.
+
+\begin{lstlisting}[language=Kotlin, caption=detectLivestream in FaceLandmarkerHelper.kt]
+    fun detectLivestream(
+    imageProxy: ImageProxy
+    ) {
+        val frameTime = SystemClock.uptimeMillis()
+        
+        val bitmapBuffer = Bitmap.createBitmap(
+        imageProxy.width,
+        imageProxy.height,
+        Bitmap.Config.ARGB_8888
+        )
+        imageProxy.use {bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)}
+        imageProxy.close()
+        
+        val matrix = Matrix().apply {
+            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+            postScale(-1f, 1f, imageProxy.width.toFloat(), imageProxy.height.toFloat())
+        }
+        
+        val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
+        
+        val mpImage = BitmapImageBuilder(rotatedBitmap).build()
+        
+        detectAsync(mpImage, frameTime)
+    }
+\end{lstlisting}
+Het algemeen doel van deze functie is het omzetten van een camera frame (\emph{ImageProxy)} naar een formaat dat MediaPipe kan analyseren (\emph{MPImage}).
+
+Er wordt eerst een \emph{Bitmap} gemaakt. De bitmap heeft dezelfde breedte en hoogte als het beeld en zal worden geconfigureerd in \emph{ARGB\_8888}. Dit is dezelfde configuratie als in \emph{CameraFragment}. Daarna worden de pixels van de \emph{ImageProxy} gekopieerd naar de des betreffende \emph{bitmapBuffer}. De \emph{use} blok zorgt er voor dat dit mogelijk is en zorgt er ook voor dat we de \emph{ImageProxy} kunnen sluiten achteraf.
+
+Vervolgens wordt er een \emph{Matrix} object aangemaakt. Dit is optioneel en zorgt er voor dat de bitmap geroteerd kan worden. Hetgeen wat er voor zorgt dat de bitmap corrigeert voor de rotatie van de camera is \emph{postRotate}. Die gaat de bitmap roteren met het aantal graden dat is opgeslagen in \emph{imageProxy.imageInfo.rotationDegrees}. Terwijl \emph{postScale} er voor gaat zorgen dat de bitmap over de Y-as gespiegeld wordt. Dit komt omdat de beelden van de frontcamera vaak gespiegeld zijn.
+
+Uiteindelijk wordt er een geroteerde bitmap gemaakt met de huidige \emph{bitmapBuffer} en \emph{Matrix} zodat het detecteren mooi op het gezicht zelf valt.
+
+Tenslotte wordt de bitmap omgezet in een \emph{MPImage} zodat de \emph{FaceLandmarker} het kan analyseren.
+
+\begin{lstlisting}[language=Kotlin, caption=detectAsync in FaceLandmarkerHelper.kt]
+    private fun detectAsync(mpImage: MPImage, frameTime: Long) {
+        faceLandmarker?.detectAsync(mpImage,frameTime)
+    }
+\end{lstlisting}
+Deze methode roept de \emph{detectAsync} methode op van de \emph{FaceLandmarker} klasse.
 
