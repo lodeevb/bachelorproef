@@ -91,7 +91,12 @@ Er zijn drie criteria die dienen om de vermoeidheid te oordelen. Deze zijn de fr
 
 \section{Artificiële Intelligentie}
 Artificiële, beter gekend als kunstmatige, intelligentie is een manier voor machines om het `gedachteproces' van een mens na te bootsen. Hiermee zijn verschillende computerprogramma's in staat om te redeneren, conclusies te vormen en te antwoorden zoals bijna ieder hedendaags persoon kan. De meest bekende kunstmatige intelligentie, die bij zowaar niemand meer onbekend blijft, is ChatGPT. Dat in staat is om vragen te beantwoorden, meer uitleg geven over verschillende programmeertalen, wiskundige formules uit te leggen en op te lossen etc. Er is een continue ontwikkeling op dit vakgebied en wordt alsmaar meer geïmplementeerd in het dagelijks leven.
-
+backgroundExecutor.execute {
+    faceLandmarkerHelper = FaceLandmarkerHelper(
+    context = requireContext(),
+    faceLandmarkerHelperListener = this
+    )
+}
 \subsection{Gezichtsdetectie}
 AI heeft verschillende functionaliteiten. Zo is het in staat om het gezicht te detecteren van zowel foto's, video's en in real-time. Het kan echter wel zijn dat de nauwkeurigheid en de detectieratio aangetast worden. Dit wordt gedefinieerd als 'uitdagingen', enkele van deze zijn:
 \begin{itemize}
@@ -171,4 +176,44 @@ Grijze informatie kan ook behandeld worden om belangrijke kenmerken uit het gezi
 
 \subsubsection{Edge Base}
 \textcite{sakai1972} hebben ervoor gezorgd dat het gezicht te detecteren valt op basis van de omtrek. Dit is gebaseerd op het analyseren van lijntekeningen van gezichten, waarvan het doel is om de kenmerken te detecteren. Vervolgens werd er een hiërarchisch framework voorgesteld door \textcite{CRAW1987} om de uitlijnen van het hoofd te traceren. \textcite{anila2010} hebben een simpel en snel systeem gepresenteerd om het gezicht te detecteren. Dit heeft drie stappen. Allereerst worden de afbeeldingen verbeterd door het toepassen van een median filter, wat zorgt voor ruisverwijdering, en een histogramegalisatie voor het aanpassen van het contrast. Vervolgens wordt de randafbeelding gemaakt uit de verbeterde afbeeldingen door de Sobel-operator toe te passen. Tenslotte wordt er een nieuw randvolg-algoritme toegepast om zo de verschillende subvensters uit de verbeterde afbeelding te halen. Om die subvensters te kunnen identificeren als het om een gezicht of niet ging, werd er het Black Propagation Neural Network (BPN) algoritme toegepast.
+
+\subsection{Eye Aspect Ratio}
+Eye Aspect Ratio (EAR) is een berekening die zal kijken of de ogen open of gesloten zijn. Deze formule is voorgesteld door de Tsjechische Universiteit van Technologie \autocite{soukupova2016}. De ratio wordt verkregen door het detecteren van het gezicht uit een afbeelding en het vinden van de Euclidische afstand van de coördinaten van het oog \autocite{KUWAHARA202250}. Deze punten worden vervolgens vervangen in volgende formule:
+\begin{equation*}
+    EAR =  \frac{||P2 - P6|| + ||P3 - P5||}{2||P1-P4||}
+\end{equation*}
+De coördinaten worden gedefinieerd als punten P1 tot en met P6. 
+
+\subsubsection{Face Landmark}
+Die punten bevinden zich op het gezicht en worden achterhaald door middel van een face landmark. Dit is een soort grid dat op het gezicht wordt geplaatst en heeft enkele oriëntatiepunten. Deze punten representeren de kenmerken van het gezicht. De grootste kenmerken die door deze punten kunnen worden weergegeven zijn de ogen, neus en mond. Zie \ref{fig:facelandmark} voor een voorbeeld.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth]{facelandmark_example.png}
+    \caption{Voorbeeld grid van Face Landmark op mezelf. \href{https://mediapipe-studio.webapps.google.com/demo/face_landmarker}{MediaPipe Face Landmark Voorbeeld}}
+    \label{fig:facelandmark}
+\end{figure}
+Deze oriëntatiepunten worden geïndexeerd. Zie \ref{fig:facelandmarkpoints} wat er bedoeld wordt.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.48\textwidth]{mediapipe_facelandmark_orientatitionpoints.png}
+    \caption{Voorbeeld grid van Face Landmark met oriëntatiepunten \href{https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker}{MediaPipe Face Landmark}}
+    \label{fig:facelandmarkpoints}
+\end{figure}
+
+Als er wordt ingezoomd op de afbeelding, dan kan er waargenomen worden dat deze punten geassocieerd wordt met nummers. Die vormen namelijk het oriëntatiepunt. \ref{fig:eyelandmarks_mediapipe}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{facelandmark_eyes.png}
+    \caption{Vergroting gebied rond de ogen van \ref{fig:facelandmarkpoints}}
+    \label{fig:eyelandmarks_mediapipe}
+\end{figure}
+
+De punten die worden effectief worden gebruikt bij het berekenen van EAR zien er als volgt uit \ref{fig:eyelandmarks}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{eyelandmarks.png}
+    \caption{Punten voor EAR berekening.}
+    \label{fig:eyelandmarks}
+\end{figure}
+
 

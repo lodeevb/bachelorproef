@@ -2,14 +2,14 @@
 \label{ch:proof-of-concept}
 
 \section{Introductie}
-Als PoC heb ik besloten om een mobiele applicatie te ontwikkelen. Deze applicatie is in staat om het gezicht te detecteren en er bepaalde kenmerken uit te halen om vervolgens de vermoeidheid te berekenen. De reden waarom ik er voor koos om een mobiele applicatie te maken is vrij simpel. Tegenwoordig gebruikt iedereen wel een houdertje om zijn/haar gsm in te stoppen tijdens het rijden. Vaak is dit ook op de bestuurder gericht. Doordat dan onrechtstreeks de camera vaak op de bestuurder gericht staat, kan de applicatie vervolgens het gezicht detecteren en zo de conclusie er uit halen of hij al dan niet vermoeid is.
+Als PoC wordt er een mobiele applicatie te ontwikkeld. Deze applicatie is in staat om het gezicht te detecteren en er bepaalde kenmerken uit te halen om vervolgens de vermoeidheid te berekenen. De reden waarom er voor een mobiele applicatie gekozen is is heel simpel. Tegenwoordig gebruikt iedereen wel een houdertje om zijn/haar gsm in te stoppen tijdens het rijden. Vaak is dit ook op de bestuurder gericht. Doordat dan onrechtstreeks de camera vaak op de bestuurder gericht staat, kan de applicatie vervolgens het gezicht detecteren en zo de conclusie er uit halen of hij al dan niet vermoeid is. De applicatie maakt gebruik van MediaPipe zijn Face Landmark detectie en breidt zo uit op het uitvoeren van formules voor het berekenen van Eye Aspect Ratio en PERCLOS.
 
 \section{Doelstellingen}
 Het belangrijkste doel van deze applicatie is, om door vermoeidheid te detecteren, het voorkomen van het gevaar in de verkeersveiligheid. Er gebeuren dagelijks wel wat ongevallen, zowel overdag als 's nachts. Één van de oorzaken voor ongevallen is dat de reactietijd van de bestuurder vaak te traag is door vermoeidheid. Uiteraard spelen er nog andere factoren een grote rol, maar de grootste oorzaak van nachtelijke ongevallen is toch wel vaak de vermoeidheid. Deze PoC zal er proberen voor zorgen dat dit zo snel mogelijk gedetecteerd kan worden en de bestuurder kan 'wakker' maken, zodat hij/zij zelf kan inschatten of ze beter zouden slapen dan verder rijden.
 
 \section{Technologieën}
 \subsection{Kotlin}
-Ik heb besloten om de applicatie te ontwikkelen in Kotlin. Sinds de Google I/O conferentie is er aangekondigd dat Android development Kotlin-first is. Dit houdt in dat dit gezien wordt als de primaire programmeertaal om een Android applicatie te ontwikkelen. Het biedt namelijk veel voordelen. Enkele van deze voordelen zijn:
+De applicatie wordt ontwikkeld in Kotlin. Sinds de Google I/O conferentie is er aangekondigd dat Android development Kotlin-first is. Dit houdt in dat dit gezien wordt als de primaire programmeertaal om een Android applicatie te ontwikkelen. Het biedt namelijk veel voordelen. Enkele van deze voordelen zijn:
 \begin{itemize}
     \item \textbf{Minder code met een grotere leesbaarheid}: Je hoeft minder tijd te besteden aan het schrijven van code en is vaak sneller te begrijpen.
     \item \textbf{Minder veelvoorkomende fouten}: Applicaties die gebouwd zijn met Kotlin hebben, volgens de interne gegevens van Google, 20\% minder kans om vast te lopen.
@@ -88,7 +88,7 @@ Uiteraard heb ik toestemming nodig van de gebruiker om de camera te mogen gebrui
 De belangrijkste attributen van de fragment tag zijn \emph{android:id} en \emph{android:name}. Het eerste attribuut is de unieke ID van het fragment binnenin de navigatie. Deze ID wordt dus ook gebruikt om naar dit fragment te verwijzen bij navigatieacties. Het tweede attribuut is de naam van de klasse van het fragment. In dit geval zal er de klasse \emph{PermissionsFragment} gebruikt worden. Binnen in de action tag zijn er nog andere attributen. Zo heb je \emph{app:destination}, wat de bestemming van de navigatieactie is, \emph{app:popUpTo}, wat specificeert tot welk punt de backstack gewist zal worden en \emph{app:popUpToInclusive}, wat er voor zorgt dat 'permissions\_fragment' ook uit de backstack gewist zal worden.
 
 Nu zal er wat uitleg gegeven worden over wat er precies in de klasse \emph{PermissionsFragment.kt} zit. Om aan te tonen dat deze klasse een fragment is, zal het dan ook overerven van \emph{Fragment}. Deze heeft een methode \emph{onCreate} die wordt opgeroepen om de gebruikersinterface te creëren.
-\begin{lstlisting}[language=Kotlin,caption=override fun onCreate(savedInstanceState: Bundle?) in PermissionsFragment.kt]
+\begin{lstlisting}[language=Kotlin,caption=override fun onCreate(savedInstanceState: Bundle?) in PermissionsFragment.kt, label={lst:onCreatePermissions}]
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         when {
@@ -107,24 +107,25 @@ Nu zal er wat uitleg gegeven worden over wat er precies in de klasse \emph{Permi
 \end{lstlisting}
 Zodra de fragment gemaakt wordt, wordt de basisimplementatie van \emph{Fragment} uitgevoerd. Vervolgens wordt er gecontroleerd of de benodigde permissie verleend is. Dit gebeurt in de \emph{when} conditie. Die gaat de permissie voor de camera ophalen en controleren of hij al dan niet verleend is, dit gebeurt door de conditie in de accolades na \emph{when}. Dit haalt de context van het fragment op inclusief \emph{Manifest.permission.CAMERA}, wat de constante is die de camera-permissie vertegenwoordigt. Vervolgens kijkt hij of de permissie wel degelijk toegelaten is (\emph{PackageManager.PERMISSION\_GRANTED}). Indien de permissie niet is toegelaten, zal hij de popup lanceren die vraagt naar de toestemming.
 
-\begin{lstlisting}[language=Kotlin, caption=requestPermissionLauncher in PermissionsFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=requestPermissionLauncher in PermissionsFragment.kt, label={lst:requestPermissionLauncher}]
     private val requestPermissionLauncher =
-    registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-        if (isGranted) {
-            Toast.makeText(
-            context,
-            "Permission request granted",
-            Toast.LENGTH_LONG
-            ).show()
-            navigateToCamera()
-        } else {
-            Toast.makeText(
-            context,
-            "Permission request denied",
-            Toast.LENGTH_LONG
-            ).show()
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) { 
+        isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(
+                context,
+                "Permission request granted",
+                Toast.LENGTH_LONG
+                ).show()
+                navigateToCamera()
+            } else {
+                Toast.makeText(
+                context,
+                "Permission request denied",
+                Toast.LENGTH_LONG
+                ).show()
+            }
         }
-    }
 \end{lstlisting}
 Hierbij wordt er een \emph{ActivityResultLauncher} gelanceerd. Die zal de permissieaanvraag uitvoeren. De callbackfunctie \emph{isGranted} zal de boolean opslaan en zal vervolgens een passend bericht aan tonen als de aanvraag geaccepteerd of afgewezen is.
 
@@ -144,7 +145,7 @@ Hierbij wordt er een \emph{ActivityResultLauncher} gelanceerd. Die zal de permis
 \end{lstlisting}
 Deze functie wordt uitgevoerd indien de permissie van de camera wel toegelaten is. Er wordt een nieuwe coroutine gestart door \emph{lifecycleScope.launch}. Een coroutine is gekoppeld aan de levenscyclus van een fragment, in dit geval van \emph{PermissionsFragment.kt}. Dit wil zeggen dat het dus geannuleerd wordt indien het fragment of de activiteit 'vernietigd' wordt. Door de regel \emph{lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED)} zal de code binnenin dat codeblock enkel uitgevoerd worden wanneer het fragment in de toestand 'STARTED' is. Vervolgens wordt er genavigeerd naar het fragment met id \emph{camera\_fragment} vanuit de huidige fragment.
 
-\begin{lstlisting}[language=Kotlin, caption=companion object van PermissionsFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=companion object van PermissionsFragment.kt, label={lst:companionPermssion}]
 private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
 
 companion object {
@@ -163,7 +164,7 @@ Dit is het \emph{companion object} van \emph{PermissionsFragment}. Deze functie 
 Net zoals \emph{PermissionFragment} erft \emph{CameraFragment} ook over van \emph{Fragment}, maar ook van \emph{FaceLandmarkerHelper.LandmarkListener}, waar nog verdere uitleg over zal gegeven worden.
 In tegenstelling tot de \emph{PermissionsFragment} beschikt deze fragment over enkele variabelen die in het geheel van de klasse worden gebruikt. Deze variabelen zullen vermeld worden bij de methodes die ze gebruiken.
 
-\begin{lstlisting}[language=Kotlin, caption=onCreateView in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=onCreateView in CameraFragment.kt, label={lst:onCreateViewCameraFragment}]
     private var _fragmentCameraBinding: FragmentCameraBinding? = null
     private val fragmentCameraBinding get() = _fragmentCameraBinding!!
 
@@ -172,14 +173,15 @@ In tegenstelling tot de \emph{PermissionsFragment} beschikt deze fragment over e
         container: ViewGroup?,
         savedInstanceState: Bundle?): View?
         {
-            _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater,container,false)
+            _fragmentCameraBinding = FragmentCameraBinding
+                                .inflate(inflater,container,false)
     
             return fragmentCameraBinding.root
         }
 \end{lstlisting}
 Deze methode wordt uitgevoerd terwijl de view wordt aangemaakt. De variabele \emph{\_fragmentCameraBinding} is een gegenereerde klasse dat overeenkomt met de layout file van het fragment (\emph{fragment\_camera.xml}). Nadien wordt de variabele \emph{fragmentCameraBinding} gebruikt als een \emph{get()} functie om het fragment effectief te verkrijgen. De methode \emph{onCreateView} gaat de view van de camera maken. Dit doet hij door het fragment 'op te blazen' met de view, wat dus wilt zeggen dat de view in de layout wordt gestopt. Daarna wordt de top-level view gereturned (\emph{fragmentCameraBinding.root}).
 
-\begin{lstlisting}[language=Kotlin, caption=onViewCreated in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=onViewCreated in CameraFragment.kt, label={lst:onViewCreatedCameraFragment}]
     private lateinit var backgroundExecutor: ExecutorService
     
      private val faceBlendshapesResultAdapter by lazy {
@@ -221,11 +223,12 @@ De \emph{RecyclerView} van de layout wordt eerst opgehaald in het \emph{with} bl
 
 Nadien wordt er een \emph{backgroundExecutor} gemaakt. Dit is een thread executor dat verdere taken op de achtergrond zal uitvoeren. Na al deze elementen geïnitialiseerd zijn zal de camera zich klaarmaken voor gebruik. Dit gebeurt echter enkel als de view gemaakt is en de \emph{viewFinder} beschikbaar is. Tenslotte zal de \emph{backgroundExecutor} een \emph{FaceLandmarkerHelper} maken op de achtergrond. De parameters van deze klasse worden later besproken.
 
-\begin{lstlisting}[language=Kotlin, caption=setUpCamera in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=setUpCamera in CameraFragment.kt, label={lst:setUpCamera}]
     private var cameraProvider: ProcessCameraProvider? = null
     
     private fun setUpCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        val cameraProviderFuture = ProcessCameraProvider
+                                        .getInstance(requireContext())
         cameraProviderFuture.addListener(
         {
             cameraProvider = cameraProviderFuture.get()
@@ -240,23 +243,23 @@ Hier wordt de camera klaargemaakt voor gebruik. Deze methode instantieert de var
 
 De code binnenin de accolades van de \emph{addListener} wordt uitgevoerd zodra de algemene executor van de context wordt opgehaald in \emph{ContextCompat.getMainExecutor(requireContext())}. In die blok van code wordt de \emph{cameraProvider} gedeclareerd en worden de usecases van de camera ingesteld (\emph{bindCameraUseCases}).
 
-\begin{lstlisting}[language=Kotlin, caption=bindCameraUseCases in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=bindCameraUseCases in CameraFragment.kt, label{lst:bindCameraUseCases}]
     private var preview: Preview? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
     private fun bindCameraUseCases() {
      
-        val cameraProvider = cameraProvider?: throw IllegalStateException("Camera initialization failed.")
+        val cameraProvider = cameraProvider?:
+                            throw IllegalStateException("Camera initialization failed.")
         
      
         val cameraSelector = CameraSelector.Builder()
         .requireLensFacing(CameraSelector.LENS_FACING_FRONT).build()
         
         val screenSize = Size(640, 480)
-        val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(
-        ResolutionStrategy(screenSize,
-        ResolutionStrategy.FALLBACK_RULE_NONE)
-        ).build()
+        val resolutionSelector = ResolutionSelector.Builder()
+                            .setResolutionStrategy(ResolutionStrategy(screenSize,
+                            ResolutionStrategy.FALLBACK_RULE_NONE)).build()
         
         preview = Preview.Builder()
         .setResolutionSelector(resolutionSelector)
@@ -285,7 +288,8 @@ De code binnenin de accolades van de \emph{addListener} wordt uitgevoerd zodra d
             imageAnalyzer
             )
             
-            preview?.setSurfaceProvider(fragmentCameraBinding.viewFinder.surfaceProvider)
+            preview?.setSurfaceProvider(fragmentCameraBinding
+                                            .viewFinder.surfaceProvider)
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -305,7 +309,7 @@ Voordat er nieuwe use cases aan de \emph{cameraProvider} gebonden kunnen worden,
 
 Als laatste stap worden de 3 use cases: \emph{CameraSelector}, \emph{Preview} en \emph{ImageAnalysis} gebonden aan de levenscyclus van de cameraprovider en het oppervlak van de \emph{viewFinder} zich aan de preview binden. Indien dat niet lukt, zal er zich een error voordoen.
 
-\begin{lstlisting}[language=Kotlin, caption=detectFace in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=detectFace in CameraFragment.kt, label={lst:detectFace}]
     
     private fun detectFace(imageProxy: ImageProxy){
         faceLandmarkerHelper.detectLivestream(
@@ -317,7 +321,7 @@ Als laatste stap worden de 3 use cases: \emph{CameraSelector}, \emph{Preview} en
 De methode \emph{detectFace} gaat het beeld van de \emph{ImageAnalyzer} nemen en gaat de methode \emph{detectLiveStream(ImageProxy imageProxi)} oproepen die in de \emph{FaceLandmarkerHelper} staat.
 
 We zien dat \emph{CameraFragment} overerft van \emph{FaceLandMarkerHelper.Listener}. Dit is een interface die in \emph{FaceLandmarkerHelper} staat. Deze beschikt over 3 methodes: \emph{onError}, \emph{onEmpty} en \emph{onResults}.
-\begin{lstlisting}[language=Kotlin, caption=onError in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=onError in CameraFragment.kt, label={lst:onError}]
 override fun onError(error: String, errorCode: Int) {
     activity?.runOnUiThread {
         Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
@@ -328,7 +332,7 @@ override fun onError(error: String, errorCode: Int) {
 \end{lstlisting}
 Dit zorgt ervoor dat de gebruiker op de hoogte wordt gebracht indien er zich een fout voordoet. Als er effectief een fout voorkomt, zullen de resultaten op \emph{null} worden ingesteld en wordt er aan \emph{faceBlendshapesResultdAdapter} gecommuniceerd dat de dataset veranderd is.
 
-\begin{lstlisting}[language=Kotlin, caption=onEmpty in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=onEmpty in CameraFragment.kt, label={lst:onEmpty}]
     override fun onEmpty() {
         fragmentCameraBinding.overlay.clear()
         activity?.runOnUiThread {
@@ -339,12 +343,15 @@ Dit zorgt ervoor dat de gebruiker op de hoogte wordt gebracht indien er zich een
 \end{lstlisting}
 Deze methode zal er voor zorgen dat de applicatie reageert als er geen gezicht wordt gedetecteerd. Hij wist ook de mogelijke visuele overlay en zal ook de resultaten op \emph{null} gezet worden.
 
-\begin{lstlisting}[language=Kotlin, caption=onResults in CameraFragment.kt]
+\begin{lstlisting}[language=Kotlin, caption=onResults in CameraFragment.kt, label={lst:onResults}]
     override fun onResults(resultBundle: FaceLandmarkerHelper.ResultBundle) {
         activity?.runOnUiThread {
             if (_fragmentCameraBinding != null) {
-                if (fragmentCameraBinding.recyclerviewResults.scrollState != SCROLL_STATE_DRAGGING) {
-                    faceBlendshapesResultAdapter.updateResults(resultBundle.result)
+                if (fragmentCameraBinding.recyclerviewResults
+                                        .scrollState != SCROLL_STATE_DRAGGING)
+                {
+                    faceBlendshapesResultAdapter
+                                    .updateResults(resultBundle.result)
                     faceBlendshapesResultAdapter.notifyDataSetChanged()
                 }
                 
@@ -366,7 +373,7 @@ Om het gezicht te kunnen detecteren en weer te geven aan de gebruiker, zijn er e
 \subsubsection{FaceLandmarkerHelper}
 Deze klasse zal het gezicht op het beeld detecteren. Dit kan gezien worden als de basis van de gezichtsdetectie. Nu zullen de methoden die gebruikt zijn in deze klasse uitgelegd worden. Voor dat we de verder duiken in deze klasse, zal er eerst wat informatie gegeven worden over het \emph{companion object} zodat we toegang hebben tot verschillende constanten bij het aanmaken van deze klasse.
 
-\begin{lstlisting}[language=Kotlin, caption=companion object van FaceLandmarkerHelper.kt]
+\begin{lstlisting}[language=Kotlin, caption=companion object van FaceLandmarkerHelper.kt, label={lst:companionFaceLandmarkerHelper}]
     companion object {
         const val TAG = "FaceLandmarkerHelper"
         private const val MP_FACE_LANDMARKER_TASK = "face_landmarker.task"
@@ -384,7 +391,17 @@ Deze klasse zal het gezicht op het beeld detecteren. Dit kan gezien worden als d
 \end{lstlisting}
 De constante \emph{TAG} wordt vooral gebruikt bij het loggen. Indien er zich dan een fout voordoet, kan er in de logs gekeken worden in welke klasse deze error zich voordoet. \emph{MP\_FACE\_LANDMARKER\_TASK} is de constante dat een relatie legt aan de \emph{task} die het detecteren zal volbrengen. Deze taak is in de \emph{assets} folder gezet. De overige constanten die ingesteld staan als parameters om de taak aan te passen.
 
-\begin{lstlisting}[language=Kotlin, caption=init() en setupFaceLandmarker() in FaceLandmarkerHelper.kt]
+\begin{lstlisting}[language=Kotlin, caption=interface LandmarkListener, label={lst:interfaceLandmarkListener}]
+     interface LandmarkListener {
+        fun onError(error: String, errorCode: Int = OTHER_ERROR)
+        fun onResults(resultBundle: ResultBundle)
+        fun onEmpty() {}
+    }
+\end{lstlisting}
+Dit is de interface \emph{LandmarkListener}. Doordat we \emph{RunningMode.LIVE\_STREAM} gebruiken, hebben we nood aan deze interface. Deze methodes zijn uitgeschreven in \emph{CameraFragment}. Dit houdt dus in dat dit eigenlijk een \emph{LandmarkListener} is en dus de resultaten asynchroon zal ontvangen.
+
+
+\begin{lstlisting}[language=Kotlin, caption=init() en setupFaceLandmarker() in FaceLandmarkerHelper.kt, label={lst:setupFaceLandmarker}]
     init {
         setupFaceLandmarker()
     }
@@ -406,7 +423,8 @@ De constante \emph{TAG} wordt vooral gebruikt bij het loggen. Indien er zich dan
         baseOptionBuilder.setModelAssetPath(MP_FACE_LANDMARKER_TASK)
         
         if (faceLandmarkerHelperListener == null) {
-            throw IllegalStateException("faceLandmarkerHelperListener must be set when runningMode is LIVE_STREAM")
+            throw IllegalStateException(
+                    "faceLandmarkerHelperListener must be set when runningMode is LIVE_STREAM")
         }
         
         try {
@@ -436,7 +454,8 @@ De constante \emph{TAG} wordt vooral gebruikt bij het loggen. Indien er zich dan
             "Face Landmarker failed to initialize. See error logs for " +
             "details", GPU_ERROR
             )
-            Log.e(TAG, "Face Landmarker failed to load model with error: " + e.message)
+            Log.e(TAG, "Face Landmarker failed to load model with error: " + 
+                                                                        e.message)
         }
     }
 \end{lstlisting}
@@ -445,7 +464,8 @@ De klasse wordt geïnitialiseerd door een \emph{init()} methode. In die methode 
 
 Eerst en vooral wordt er een \emph{BaseOptions} ingesteld. Die opties vormen de basis van de taak. Het eerste \emph{if} statement gaat selecteren wat de taak gaat uitvoeren. Dat kan zowel de CPU als de GPU zijn, afhankelijk van hoe het is ingesteld. In het geval van deze Proof of Concept is het de CPU. Doordat onze applicatie niet zo krachtig is, heeft het geen impact op de performance, je zou dus evengoed de GPU kunnen kiezen. De \emph{currentDelegate} wordt meegegeven als parameter en staat ingesteld op \textbf{\emph{var currentDelegate: Int = DELEGATE\_CPU}}. Er kan dus een andere delegate meegegeven worden indien dat gewenst is, anders zal de CPU gebruikt worden.
 
-Vervolgens wordt het pad van de taak ingesteld. Dit is de constante \emph{MP\_FACE\_LANDMARKER\_TASK} die we in het \emph{companion object} gedeclareerd hebben. Zo weet de \emph{BaseOptions} welke taak hij moet uitvoeren, in dit geval \emph{face\_landmarker.task}.
+Vervolgens wordt het pad van de taak ingesteld. Dit is de constante
+\emph{MP\_FACE\_LANDMARKER\_TASK} die we in het \emph{companion object} gedeclareerd hebben. Zo weet de \emph{BaseOptions} welke taak hij moet uitvoeren, in dit geval \emph{face\_landmarker.task}.
 
 Het \emph{if} statement nadat het \emph{assetPath} is ingesteld, kijkt of er wel een \emph{faceLandmarkerHelperListener} is. Ook dit is een parameter van deze klasse \textbf{\emph{var faceLandmarkerHelperListener: LandmarkListener? = null}}. Een \emph{LandmarkListener} is noodzakelijk wanneer de \emph{RUNNING.MODE} wordt ingesteld op livestream. Zo krijgen we een continue detectie en analyse. Eerder gezien in de \emph{onViewCreated} wordt \emph{CameraFragment} meegegeven als \emph{LandmarkListener}. Zo weet de taak of er nieuwe beelden binnenkomen, wat in dit geval constant is.
 
@@ -463,7 +483,7 @@ Tenslotte wordt er een \emph{try catch} uitgevoerd. In het try gedeelte van de c
 \end{itemize}
 Al de parameters die hierboven zijn gebruikt, staan in het \emph{companion object}. Nadat de taak succesvol geconfigureerd is, zal hij gebouwd worden. Indien er ergens iets mis loopt in het \emph{try} blok, zijn er \emph{catch} blokken voorzien om de errors te melden.
 
-\begin{lstlisting}[language=Kotlin, caption=returnLiveStreamResult in FaceLandmarkerHelper.kt]
+\begin{lstlisting}[language=Kotlin, caption=returnLiveStreamResult in FaceLandmarkerHelper.kt, label={lst:returnLiveStreamResult}]
     private fun returnLivestreamResult(
     faceLandmarkerResult: FaceLandmarkerResult,
     mpImage: MPImage
@@ -495,7 +515,7 @@ Al de parameters die hierboven zijn gebruikt, staan in het \emph{companion objec
 \end{lstlisting}
 Deze methode zal het resultaat teruggeven van de detectie. Deze functie heeft als parameters \emph{FaceLandmarkerResult} en \emph{MPImage}. Het doel van deze functie is het controleren of er daadwerkelijk gezichten gedetecteerd zijn of niet. Indien dit het geval is, zal er berekend worden hoelang het geduurd heeft tot de resultaten. Dit gebeurt door \emph{inferenceTime}. Het is de tijd sinds de applicatie is opgestart - de tijd dat het geduurd heeft om een gezicht te detecteren. Tenslotte wordt er een \emph{ResultBundle} gemaakt. Daarin zit het resultaat, de tijd en de hoogte en breedte van de camerabeelden. Als er geen gezichten gedetecteerd zijn, zal de \emph{onEmpty()} functie opgeroepen worden.
 
-\begin{lstlisting}[]
+\begin{lstlisting}[language=Kotlin, caption=returnLiveStreamError in FaceLandmarkerHelper.kt, label={lst:returnLivestreamError}]
     private fun returnLivestreamError(runtimeException: RuntimeException) {
         faceLandmarkerHelperListener?.onError(
         runtimeException.message ?: "An unknown error has occurred"
@@ -504,7 +524,7 @@ Deze methode zal het resultaat teruggeven van de detectie. Deze functie heeft al
 \end{lstlisting}
 Dit is de functie die een error zal werpen indien er zich een \emph{RuntimeException} voordoet.
 
-\begin{lstlisting}[language=Kotlin, caption=detectLivestream in FaceLandmarkerHelper.kt]
+\begin{lstlisting}[language=Kotlin, caption=detectLivestream in FaceLandmarkerHelper.kt, label={lst:detectLivestream}]
     fun detectLivestream(
     imageProxy: ImageProxy
     ) {
@@ -515,15 +535,19 @@ Dit is de functie die een error zal werpen indien er zich een \emph{RuntimeExcep
         imageProxy.height,
         Bitmap.Config.ARGB_8888
         )
-        imageProxy.use {bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)}
+        imageProxy.use {bitmapBuffer.copyPixelsFromBuffer(
+                                                    imageProxy.planes[0].buffer)}
         imageProxy.close()
         
         val matrix = Matrix().apply {
             postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
-            postScale(-1f, 1f, imageProxy.width.toFloat(), imageProxy.height.toFloat())
+            postScale(-1f, 1f, imageProxy.width.toFloat(),
+                                    imageProxy.height.toFloat())
         }
         
-        val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
+        val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0,
+                                  bitmapBuffer.width, bitmapBuffer.height,
+                                                                 matrix, true)
         
         val mpImage = BitmapImageBuilder(rotatedBitmap).build()
         
@@ -540,10 +564,154 @@ Uiteindelijk wordt er een geroteerde bitmap gemaakt met de huidige \emph{bitmapB
 
 Tenslotte wordt de bitmap omgezet in een \emph{MPImage} zodat de \emph{FaceLandmarker} het kan analyseren.
 
-\begin{lstlisting}[language=Kotlin, caption=detectAsync in FaceLandmarkerHelper.kt]
+\begin{lstlisting}[language=Kotlin, caption=detectAsync in FaceLandmarkerHelper.kt, label={lst:detectAsync}]
     private fun detectAsync(mpImage: MPImage, frameTime: Long) {
         faceLandmarker?.detectAsync(mpImage,frameTime)
     }
 \end{lstlisting}
-Deze methode roept de \emph{detectAsync} methode op van de \emph{FaceLandmarker} klasse.
+Deze methode roept de \emph{detectAsync} methode op van de \emph{FaceLandmarker} klasse. Dit is een functie van MediaPipe zelf.
+
+\subsection{Overlay}
+Om een visueel beeld te krijgen van het gedetecteerd gezicht, is er een overlay. Deze overlay bestaat uit een 3D model van het gezicht en een lijst van categorieën. Deze categorieën tonen aan wat het precies detecteert. Dit varieert van \emph{eyeBlinkleft} tot \emph{jawOpen}. We zullen eerst kijken hoe deze categorieën verkregen worden.
+
+\subsubsection{FaceBlendshapesResultAdapter}
+Dit is de klasse die er voor zal zorgen dat de oriëntatiepunten van de ogen opgehaald kunnen worden en vervolgens de Eye Aspect Ratio en PERCLOS berekend. Deze klasse erft over van \emph{RecyclerView.Adapter<FaceBlendshapesResultAdapter.ViewHolder>}. Dit wordt dus een adapter voor een \emph{RecyclerView}. Het gebruikt een aangepaste \emph{ViewHolder} klasse. Hierdoor kunnen we de resultaten weergeven.
+\begin{lstlisting}[language=Kotlin, caption=ViewHolder klasse in FaceBlendshapesResultAdapter, label={lst:ViewHolder}]
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(perclos)
+    }
+    
+    inner class ViewHolder(private val binding: FaceBlendshapesResultBinding):
+                                      RecyclerView.ViewHolder(binding.root) {
+        fun bind(score: Double){
+            with(binding) {
+                tvLabel.text = "PERCLOS"
+                tvScore.text = String.format(Locale.ENGLISH, "%.2f%%", score)
+                if (score < 20) tvState.text = "Alert"
+                else if (score > 20 && score < 30)  tvState.text = "Drowsy"
+                else if (score > 30) tvState.text = "Fatigue"
+            }
+        }
+    }
+\end{lstlisting}
+Deze klasse neemt een instantie van \emph{FaceBlendshapesResultBinding} als parameter. Dat is een gegenereerde binding klasse dat er voor zorgt dat er toegang is tot de bijbehorende XML layout klasses. Er wordt een \emph{double} score gebonden aan de \emph{ViewHolder}. Dit gebeurt in \emph{onBindViewHolder} en bevat het PERCLOS percentage.
+
+\begin{lstlisting}[language=Kotlin, caption=onCreateViewHolder in FaceBlendshapesResultAdapter, label={lst:onCreateViewHolder}]
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder
+    {
+        val binding = FaceBlendshapesResultBinding.inflate(
+        LayoutInflater.from(parent.context),
+        parent,
+        false
+        )
+        return ViewHolder(binding)
+    }
+\end{lstlisting}
+Dit zorgt er voor dat er een nieuwe \emph{ViewHolder} instantie wordt gemaakt indien de \emph{RecyclerView} een nieuwe nodig heeft. Dit is nodig zodat de data accuraat wordt weergegeven. De binding wordt opgeblazen met de layout, de parent en een \emph{boolean}. De \emph{parent} is de view waar \emph{ViewHolder} aan hangt. De \emph{boolean} die op \emph{false} staat, is een aanbevolen optie om er voor te zorgen dat deze view zich niet meteen aan de \emph{parent} hangt.
+
+\begin{lstlisting}[language=Kotlin, caption=PERCLOS en EAR berekenen, label={lst:updateResults}]
+    private var perclos = 0.0
+    
+    private val frameRate = 30
+    private val duration = 30
+    private val durationInFrames = duration * frameRate
+    private var closedFrames = 0
+    private var totalFrames = 0
+    private val closedFramesQueue: Queue<Boolean> = LinkedList()
+    private val EAR_THRESHOLD = 0.2F
+    
+    fun updateResults(faceLandmarkerResult: FaceLandmarkerResult? = null,
+                                        inputWidth : Int, inputHeight : Int)
+    {
+        var leftEyeClosed = false
+        var rightEyeClosed = false
+        if (faceLandmarkerResult != null && faceLandmarkerResult.faceLandmarks()
+                                                                    .isNotEmpty())
+        {
+            val faceLandmarks = faceLandmarkerResult.faceLandmarks()[0]
+            val leftEyeLandmarks = listOf(
+            faceLandmarks[33], faceLandmarks[160], faceLandmarks[158],
+            faceLandmarks[133], faceLandmarks[153], faceLandmarks[144])
+            val rightEyeLandmarks = listOf(
+            faceLandmarks[263], faceLandmarks[387], faceLandmarks[385],
+            faceLandmarks[362], faceLandmarks[380], faceLandmarks[373]
+            )
+            val pointFListLeft: MutableList<PointF> = mutableListOf()
+            val pointFListRight: MutableList<PointF> = mutableListOf()
+            
+            for (landmark in leftEyeLandmarks) {
+                pointFListLeft.add(landmarkToPointF(landmark,
+                                                        inputWidth,inputHeight))
+            }
+            
+            for (landmark in rightEyeLandmarks) {
+                pointFListRight.add(landmarkToPointF(landmark,
+                                                        inputWidth,inputHeight))
+            }
+            
+            val leftEAR = calculateEAR(pointFListLeft)
+            val rightEAR = calculateEAR(pointFListRight)
+            
+            leftEyeClosed = leftEAR < EAR_THRESHOLD
+            rightEyeClosed = rightEAR < EAR_THRESHOLD
+        }
+        val closedEyes = leftEyeClosed && rightEyeClosed
+        
+        if (closedFramesQueue.size >= durationInFrames) {
+            val removed = closedFramesQueue.poll()
+            if (removed == true) {
+                closedFrames--
+            }
+        }
+        closedFramesQueue.add(closedEyes)
+        if (closedEyes) {
+            closedFrames++
+        }
+        val totalFrames = closedFramesQueue.size
+        perclos = (closedFrames.toDouble() / totalFrames) * 100
+        
+        
+    }
+    
+    fun landmarkToPointF(landmark: NormalizedLandmark, frameWidth: Int, 
+                                                      frameHeight: Int): PointF
+    {
+        return PointF(landmark.x() * frameWidth, landmark.y() * frameHeight)
+    }
+    
+    fun calculateDistance(p1: PointF, p2: PointF): Float {
+        return sqrt((p1.x - p2.x).pow(2) + (p1.y - p2.y).pow(2))
+    }
+    
+    fun calculateEAR(eyeLandmarks: List<PointF>): Float {
+        val verticalOne = calculateDistance(eyeLandmarks[1], eyeLandmarks[5])
+        val verticalTwo = calculateDistance(eyeLandmarks[2], eyeLandmarks[4])
+        val horizontal = calculateDistance(eyeLandmarks[0], eyeLandmarks[3])
+        
+        return (verticalOne + verticalTwo) / (2.0F * horizontal)
+    }
+\end{lstlisting}
+In de methode \emph{updateResults} wordt het resultaat van de detectie gebruikt om zo vervolgens de Eye Aspect Ratio en de PERCLOS te berekenen. De parameters bestaan uit \emph{inputWidth}, \emph{inputHeight} en {FaceLandmarkerResult}.
+
+Allereerst worden er 2 \emph{booleans} gedeclareerd. Deze \emph{booleans} geven aan of de ogen gesloten zijn. De berekening van de openheid en geslotenheid bevindt zich in het \emph{if} statement. Die gaat eerst kijken of \emph{FaceLandmarkerResult} bestaat, er kunnen uiteraard enkel berekeningen worden uitgevoerd indien het resultaat beschikbaar is. Ook is er een controle om te kijken of er effectief wel oriëntatiepunten aanwezig zijn in het resultaat. Dit is nodig omdat we deze punten gaan gebruiken voor de EAR berekening. 
+
+Na deze controle worden de oriëntatiepunten van het gezicht opgehaald. Dit gebeurt via \emph{faceLandmarkerResult.faceLandmarks()[0]}. Uit deze lijst van \emph{NormalizedLandmarks} worden de oriëntatiepunten van zowel het linker- als rechteroog opgehaald, die te vinden zijn in \ref{fig:eyelandmarks_mediapipe}. Die punten worden omgezet naar \emph{PointF} via \emph{landmarkToPointF}. Deze kenmerken zijn voorlopig nog genormaliseerd en hebben een waarde tussen 0 en 1. Om ze aan te passen naar de effectieve dimensies ten opzichte van het beeld moet er vermenigvuldigt worden met \emph{frameWidth} en \emph{frameHeight}. De coördinaten die we nodig hebben voor de ogen kan teruggevonden worden in \ref{fig:eyelandmarks}.
+
+De EAR wordt berekend volgens de methode \emph{caculateEAR} voor zowel het linker- als rechteroog. Dat gebeurt volgens deze formule:
+\begin{equation*}
+    EAR =  \frac{||P2 - P6|| + ||P3 - P5||}{2||P1-P4||}
+\end{equation*}
+Deze formule heeft 3 euclidische afstanden. Die berekening gebeurt volgens de formule:
+\begin{equation*}
+    \(d_\text{(p,q)}}\) = \sqrt{\((p_\text{1} - q_\text{1})^{2} + (p_\text{2} - q_\text{2})^{2}\)}
+\end{equation*}
+Die wordt uitgevoerd in de \emph{calculateDistance} methode. Om verder de EAR van beide ogen te berekenen, worden die 3 afstanden ingesteld als variabelen van \emph{calculateEAR}. De twee verticalen kunnen gevonden worden in \ref{fig:eyelandmarks}. Dat zijn de lijnen respectievelijk tussen P2 en P6 en P3 en P5. De horizontale lijn is dan weer P1 en P4. Tenslotte wordt dit berekend door de afstanden van de twee verticalen op te tellen en te delen door tweemaal de horizontale. De EAR wordt vervolgens vergeleken met een drempelwaarde van 0.3, wat de waarde is van gesloten. Alles boven de 0.3 is dus open en anders gesloten.
+
+Nadat de berekeningen en booleans zijn ingesteld, wordt er een nieuwe boolean gemaakt. Deze zal pas \emph{true} zijn als beide ogen onder de drempelwaarde van 0.3 zijn. Vanaf daar worden de verschillende frames bijgehouden waarin dat de ogen gesloten zijn. Er wordt een variabele gemaakt die overerft van de \emph{Queue} interface. Deze interface werkt volgens de First In First Out (FIFO) methode. Doordat de \emph{Queue} boolean krijgt als type, zal in deze variabelen enkel \emph{true} of \emph{false} zitten. Die worden dan in een \emph{LinkedList} opgeslaan.
+
+Eerst zal er een nieuwe \emph{if} statement uitgevoerd worden. Deze statement kijkt of de grootte van de \emph{Queue} groter of gelijk staat aan de variabele \emph{durationInFrames}, wat de tijdsduur vermenigvuldigt met het aantal frames per seconde (in dit geval 30 seconden tijdsframe x 30 frames per seconde = 900). Indien de queue groter of gelijk is aan de \emph{durationInFrames} wordt het eerste element dat in die queue staat verwijderd. Dat gebeurt via \emph{poll()}. Als de waarde van dat element \emph{true} was, wat dus betekent dat de ogen gesloten waren, zal het de teller \emph{closedFrames} verminderen. Nadien zal de volgende boolean in de queue gestopt worden.
+Tenslotte wordt er gecontroleerd of die boolean al dan niet op \emph{true} stond. Indien hij dat was, dan zal de teller \emph{closedFrames} met één vermeerderen.
+
+Om als laatste stap de PERCLOS te berekenen, wordt de grootte van de queue opgeslaan in \emph{totalFrames}. Daarna wordt het aantal \emph{closedFrames} gedeeld door de \emph{totalFrames} en maal 100 gedaan om zo het percentage te verkrijgen van hoelang de ogen gesloten zijn.
+
 
